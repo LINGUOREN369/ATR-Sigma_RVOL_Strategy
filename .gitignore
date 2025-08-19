@@ -1,0 +1,8 @@
+## no csv file
+*.csv
+
+## no pycache
+__pycache__/
+
+## no file from volume_indicator folder
+volume_indicator/

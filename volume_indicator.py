@@ -1,4 +1,3 @@
-# price_volume_analysis.py
 """
 Intraday price/volume analysis utilities built on yfinance.
 
@@ -20,7 +19,6 @@ Notes:
   to match market close so your outputs line up with intuition.
 """
 
-from __future__ import annotations
 from datetime import datetime
 from data_fetch import fetch
 import re
@@ -29,10 +27,12 @@ import pandas as pd
 import yfinance as yf
 from pathlib import Path
 
+pd.set_option("display.max_columns", None)
+
 # ------------------------ User-configurable parameters ------------------------
 SYMBOL   = "CRCL"        # Ticker to analyze (string)
 INTERVAL = "1d"          # One of: '1m','2m','5m','15m','30m','1h','1d'
-PERIOD   = "100d"          # One of: '1d','5d','1mo','3mo','6mo','1y'
+PERIOD   = "1y"          # One of: '1d','5d','1mo','3mo','6mo','1y'
 TZ       = "America/New_York"  # Output timezone for intraday bars
 INCLUDE_EXTENDED = False # If True (and intraday), include pre/after-market bars
 N_PRICE_BINS = 40        # Number of price bins for the volume profile
@@ -177,6 +177,8 @@ def up_down_volume(df: pd.DataFrame) -> pd.DataFrame:
     pd.DataFrame
         Unmodified input DataFrame.
     """
+    df = df.copy()
+    df["SignedVol"] = df["Volume"].diff().fillna(0)
     return df
 
 
@@ -184,13 +186,13 @@ def rvol_daily(
     symbol: str,
     tz: str,
     lookback: int = 20,
-    use_adjusted: bool = True
+    use_adjusted: bool = True  # retained for signature compatibility; handled by fetch()
 ) -> pd.DataFrame:
     """
-    Compute daily Relative Volume (RVOL) on daily bars:
-      RVOL = TodayVolume / RollingAverageVolume(lookback)
+    Compute daily Relative Volume (RVOL) using the shared `fetch()` pipeline so that
+    symbol selection, column normalization, and timezone handling are consistent.
 
-    We download roughly 3× the lookback (min 60 days) to ensure a stable average.
+    RVOL = TodayVolume / RollingAverageVolume(lookback)
 
     Parameters
     ----------
@@ -201,7 +203,7 @@ def rvol_daily(
     lookback : int
         Rolling window length for average volume.
     use_adjusted : bool
-        If True, request auto_adjust=True for prices (does not affect volume).
+        Kept for compatibility; `fetch()` already requests adjusted prices.
 
     Returns
     -------
@@ -211,54 +213,33 @@ def rvol_daily(
           - Volume
           - AvgVol (rolling mean over `lookback`)
           - RVOL   (= Volume / AvgVol)
-        Index is timezone-aware and cosmetically shifted to 16:00 local if
-        the source stamps daily bars at midnight (common in yfinance).
     """
-    dfd = yf.download(
-        symbol,
-        interval="1d",
-        period=f"{max(lookback * 3, 60)}d",
-        auto_adjust=use_adjusted,
-        prepost=False,
-        progress=False,
-    )
-    if dfd.empty:
+    # Pull daily bars via the common fetch() so naming/timezone rules stay uniform
+    period_days = max(lookback * 3, 60)
+    try:
+        dfd = fetch(symbol, interval="1d", period=f"{period_days}d", tz=tz, prepost=False)
+    except Exception:
         return pd.DataFrame()
 
-    dfd.index = pd.to_datetime(dfd.index, utc=True).tz_convert(tz)
-
-    # Handle MultiIndex columns if present
-    if isinstance(dfd.columns, pd.MultiIndex):
-        if symbol in dfd.columns.get_level_values(0):
-            dfd = dfd.xs(symbol, axis=1, level=0)
-        elif symbol in dfd.columns.get_level_values(1):
-            dfd = dfd.xs(symbol, axis=1, level=1)
-        else:
-            dfd.columns = [' '.join([str(p) for p in tup if p]).strip() for tup in dfd.columns]
-
-    dfd = dfd.rename(columns={c: str(c).title() for c in dfd.columns})
-
-    if "Volume" not in dfd.columns:
+    if dfd.empty or "Volume" not in dfd.columns:
         return pd.DataFrame()
 
     out = dfd.copy()
+
+    # Rolling average volume
     out["AvgVol"] = (
         out["Volume"]
-        .rolling(lookback, min_periods=lookback // 2)
+        .rolling(lookback, min_periods=max(1, lookback // 2))
         .mean()
-        .fillna(0)       # Avoid division by NaN; interpret as 0 until enough history
-        .astype(int)     # Friendly integer display; if you prefer floats, drop this
+        .shift(1)  # Shift to avoid using today’s volume in the average
+        .fillna(0)
     )
     out["RVOL"] = out["Volume"] / out["AvgVol"].replace(0, np.nan)
 
-    # Cosmetic index shift: many daily series show 00:00; move to 16:00 local for readability
-    idx_local = out.index.tz_convert(tz)
-    if all((idx_local.hour == 0) & (idx_local.minute == 0)):
-        out.index = idx_local.normalize() + pd.Timedelta(hours=16)
-
+    # Ensure we return Close along with Volume/AvgVol/RVOL
     price_col = "Close" if "Close" in out.columns else ("Adj Close" if "Adj Close" in out.columns else None)
     cols = [c for c in [price_col, "Volume", "AvgVol", "RVOL"] if c in out.columns]
-    return out[cols].rename(columns={price_col: "Close"}) if cols else out[["Volume","AvgVol","RVOL"]]
+    return out[cols].rename(columns={price_col: "Close"}) if cols else out[["Volume", "AvgVol", "RVOL"]]
 
 # ==============================================================================
 # Feature aggregation (single, per-bar frame)
@@ -413,7 +394,7 @@ if __name__ == "__main__":
         print("\n--- Today’s Range & Concentration ---")
         print(f"Day Low/High: {t_lo:.2f} / {t_hi:.2f}")
         # Show last few days with a single dominant label
-        print(bucket_vol.tail(20)[["DominantBucket"]])
+        print(bucket_vol.tail(5)[["DominantBucket"]])
         print(f"Today label: {bucket_vol.iloc[-1]['DominantBucket']}")
 
 
@@ -424,9 +405,6 @@ if __name__ == "__main__":
         print("\n--- Volume Profile (Last Session, top 5 bins) ---")
         print(prof_last.sort_values("Volume", ascending=False).head(5))
 
-    if not dfd_rvol.empty:
-        print("\n--- Daily RVOL (last 90 rows) ---")
-        print(dfd_rvol.tail(90))
 
     # ------------------------ Save CSV outputs ------------------------
     # Filenames include a timestamp to avoid overwriting previous runs.

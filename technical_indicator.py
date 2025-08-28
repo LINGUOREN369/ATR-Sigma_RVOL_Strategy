@@ -22,7 +22,7 @@ def rvol(df: pd.DataFrame, window: int = 20, method: str = "hybrid", alpha: floa
     method: 'sma' | 'ewm' | 'hybrid'
     alpha: weight for SMA in 'hybrid' (0 = pure EWM, 1 = pure SMA)
     """
-    vol = df["Volume"]
+    vol = df["Volume"] if "Volume" in df else df["volume"]
     sma = vol.rolling(window).mean()
     ewm = vol.ewm(span=window, adjust=False).mean()
 

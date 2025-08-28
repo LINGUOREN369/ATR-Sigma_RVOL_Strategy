@@ -89,6 +89,7 @@ def fetch_data_to_csv(symbol: str, interval: str = "1min", outputsize: str = "fu
 
 if __name__ == "__main__":
     Path("data").mkdir(parents=True, exist_ok=True)
-    fetch_data_to_csv("CRCL", interval="5min", outputsize="full")
-    fetch_data_to_csv("CRCL", interval="15min", outputsize="full")
-    fetch_data_to_csv("CRCL", interval="30min", outputsize="full")
+    stock_ticker = "CRCL"
+    fetch_data_to_csv(f'{stock_ticker}', interval="15min", outputsize="full")
+    fetch_data_to_csv(f'{stock_ticker}', interval="30min", outputsize="full")
+    fetch_data_to_csv(f'{stock_ticker}', interval= "60min", outputsize = "full")

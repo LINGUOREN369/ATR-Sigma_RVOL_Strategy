@@ -2,8 +2,9 @@ import pandas as pd
 from alpha_vantage.timeseries import TimeSeries
 from pathlib import Path
 import argparse
+import os
 
-API_KEY = "EPN8P1HRF11ZMKEV"   # put your key here
+API_KEY = os.getenv("ALPHA_VANTAGE_API_KEY")
 
 def fetch_alpha(symbol: str, interval: str = "1min", outputsize: str = "full") -> pd.DataFrame:
     """

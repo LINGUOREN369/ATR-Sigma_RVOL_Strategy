@@ -15,7 +15,7 @@ def intraday_read_csv_correct_time(file_path, assume="ET"):
     df = pd.read_csv(file_path)
 
     # Parse the column into datetimes
-    ts = pd.to_datetime(dœf["date"], errors="raise")
+    ts = pd.to_datetime(df["date"], errors="raise")
 
     # Build a tz-aware DatetimeIndex in America/New_York
     if hasattr(ts, "dt") and ts.dt.tz is not None:
@@ -45,7 +45,7 @@ def intraday_read_csv_correct_time(file_path, assume="ET"):
 
 
 
-def intraday_feature_trend(df, feature, look_back_days=config.look_back_days_hourly):
+def intraday_feature_trend(df, feature, look_back_days):
     """
     Visualize the trend of a specific feature by time of day over a look-back period.
     Returns the *sorted* average-by-time series used in the plot.
@@ -66,13 +66,13 @@ def intraday_feature_trend(df, feature, look_back_days=config.look_back_days_hou
     order = np.argsort(seconds)
 
     # Sorted x/y for plotting
-    tick_labels = times.astype(str).to_numpy()[order]
+    # tick_labels = times.astype(str).to_numpy()[order]
     avg_sorted = avg_feature_by_time.iloc[order]
     
     return avg_sorted
 
 
-def intraday_expected_cum_rvol(df_time_volume, look_back_days=config.look_back_days_hourly):
+def intraday_expected_cum_rvol(df_time_volume, look_back_days):
     cum_vol_df = df_time_volume.copy().sort_index()
     cum_vol_df["Date"] = cum_vol_df.index.date
     cum_vol_df["Time"] = cum_vol_df.index.time
@@ -87,7 +87,7 @@ def intraday_expected_cum_rvol(df_time_volume, look_back_days=config.look_back_d
     return exp_curve_long
 
 
-def intraday_rvol(min_df: pd.DataFrame, exp_cum_df: pd.DataFrame, look_back_days=config.look_back_days_hourly) -> pd.DataFrame:
+def intraday_rvol(min_df: pd.DataFrame, exp_cum_df: pd.DataFrame, look_back_days) -> pd.DataFrame:
     """
     Computes Intraday_RVOL_cum = CumVolume / Exp_CumVolume.
     """

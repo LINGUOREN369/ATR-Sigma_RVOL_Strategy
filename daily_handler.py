@@ -12,8 +12,9 @@ def daily_data_handler(stock_ticker: str, daterange: int) -> pd.DataFrame:
     df_daily.columns = ["date", "open", "high", "low", "close", "volume"]
     df_daily["date"] = pd.to_datetime(df_daily["date"]).dt.tz_localize("America/New_York")
     df_daily = df_daily.set_index("date")
+    df_daily = df_daily.sort_index(ascending=True)
 
-    return df_daily.tail(daterange)
+    return df_daily.tail(daterange).copy()
 
 
 
@@ -35,16 +36,16 @@ def daily_data_feature(df_daily: pd.DataFrame, feature: str) -> pd.DataFrame:
     # Extract feature as DataFrame
     df_feature = df_daily[[feature]]
 
-    return df_feature
+    return df_feature.copy()
 
 
 
 def daily_data_rvol(volume: pd.DataFrame, lookback: int) -> pd.DataFrame:
     """
-    Compute RVOL from a Series of volume indexed by date.
+    Compute RVOL from a dataframes of volume indexed by date.
     
     Parameters:
-    - volume (pd.Series): Series containing volume data indexed by date.
+    - volume (pd.DataFrame): DataFrame containing volume data indexed by date.
     - lookback (int): Number of days to look back for computing the feature.
 
     Returns:
@@ -52,16 +53,14 @@ def daily_data_rvol(volume: pd.DataFrame, lookback: int) -> pd.DataFrame:
     """
     
     ## use ema
-    volume["avgvol"] = volume["volume"].ewm(span=lookback, adjust=False).mean()
+    volume["avgvol"] = volume["volume"].ewm(span=lookback, adjust=False).mean().shift(1)
     volume["rvol"] = volume["volume"] / volume["avgvol"]
-    volume = volume.tail(lookback)
-    return volume
+    return volume[["rvol"]].copy()
 
 
 
 def daily_data_atr(df: pd.DataFrame, lookback: int,
     method: str = "wilder",  # "sma" or "wilder"
-    title: str | None = None
 ) -> pd.Series:
     
     """
@@ -114,4 +113,4 @@ def daily_data_atr(df: pd.DataFrame, lookback: int,
 
     atr.name = f"ATR_{method}_{lookback}"
 
-    return atr
+    return atr.copy()

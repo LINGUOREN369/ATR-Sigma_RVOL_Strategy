@@ -1,6 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import config
+import matplotlib.ticker as mtick
 
 
 def daily_data_feature_viz(df_feature: pd.DataFrame, feature: str):
@@ -14,12 +15,34 @@ def daily_data_feature_viz(df_feature: pd.DataFrame, feature: str):
     daily_date_range = df_feature.shape[0]
     plt.figure(figsize=(20, 10))
     plt.plot(df_feature.index, df_feature[feature], marker="o")
-    plt.title(f"Daily {feature.capitalize()} with {daily_date_range}-Day Lookback \n from {df_feature.index.min().date()} to {df_feature.index.max().date()}")
+    plt.title(
+        (
+            f"{config.stock_ticker} Daily {feature.capitalize()} "
+            f"with {daily_date_range}-Day Range \n from {df_feature.index.min().date()} "
+            f"to {df_feature.index.max().date()}"
+        )
+    )
     plt.xlabel("Date")
     plt.ylabel(feature.capitalize())
+    
+    ax = plt.gca()
+    if feature.lower() == "volume":
+        # # Option A: show commas
+        # ax.ticklabel_format(style="plain", axis="y")
+        # ax.yaxis.set_major_formatter(
+        #     mtick.FuncFormatter(lambda x, _: f"{int(x):,}")
+        # )
+        # Option B: show in millions (uncomment if preferred)
+        ax.yaxis.set_major_formatter(
+            mtick.FuncFormatter(lambda x, _: f"{x/1e6:.1f}M")
+        )
+
+    # Grid, ticks, and layout
     plt.grid(True)
-    plt.xticks(df_feature.index, rotation=45)  # rotate labels, let matplotlib auto-select ticks
+    plt.xticks(df_feature.index, rotation=45)
     plt.tight_layout()
+
+    # Save and show
     plt.savefig(config.FIGURE_PATH + f"{config.stock_ticker}_daily_{feature}.png")
     plt.show()
     
@@ -40,7 +63,7 @@ def daily_data_rvol_viz(volume_df: pd.DataFrame, lookback: int):
             f"{y:.2f}",  # format to 2 decimals
             ha="center", va="bottom", fontsize=8
         )
-    plt.title("Relative Volume (RVOL) Over Time with Lookback of " + str(lookback) + " Days \n from " + str(volume_df.index.min().date()) + " to " + str(volume_df.index.max().date()))
+    plt.title(f"{config.stock_ticker} RVOL {config.daily_date_range} day range - {lookback}-day lookback \n from {volume_df.index.min().date()} to {volume_df.index.max().date()}")
     plt.xticks(volume_df.index, rotation=45)
     plt.xlabel("Date")
     plt.ylabel("RVOL")
@@ -63,10 +86,7 @@ def daily_data_atr_viz(atr_df: pd.DataFrame, lookback: int):
     """
     plt.figure(figsize=(20, 10))
     plt.plot(atr_df.index, atr_df, label=f"ATR (n={lookback})")
-    ttl = f"Average True Range — {lookback}-period"
-    start = pd.to_datetime(atr_df.index.min()).date() if len(atr_df) else ""
-    end   = pd.to_datetime(atr_df.index.max()).date() if len(atr_df) else ""
-    plt.title(f"{ttl}\n{start} to {end}")
+    plt.title(f"{config.stock_ticker} ATR {config.daily_date_range} day range with {lookback}-day lookback \n from {atr_df.index.min().date()} to {atr_df.index.max().date()}")
     plt.xlabel("Date")
     plt.ylabel("ATR (price units)")
     plt.grid(True)

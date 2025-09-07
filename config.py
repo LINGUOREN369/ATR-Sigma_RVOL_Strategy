@@ -2,11 +2,17 @@
 This module contains configuration constants for the ATR-Sigma RVOL Strategy.
 """
 
+
+
 ## Path of the folder to save figures
 FIGURE_PATH = "./stock_image/"
 
 ## stock ticker to analyze
 stock_ticker = "CRCL"
+
+
+## intraday file path
+INTRADAY_FILEPATH = f"./data/{stock_ticker}_60min.csv"
 
 ## Number of days of daily data to load
 # •	30 days → very short-term view (good for testing, not for trend context).

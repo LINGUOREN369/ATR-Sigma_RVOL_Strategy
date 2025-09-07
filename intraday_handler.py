@@ -58,7 +58,7 @@ def intraday_feature_trend(df, feature, look_back_days):
     # Average over last N days
     tail_block = df_pivot.tail(look_back_days)
     avg_feature_by_time = tail_block.mean(axis=0)
-    avg_feature_by_time.name = f"Average {feature}"
+    avg_feature_by_time.name = f"Average {feature.capitalize()}"
 
     # Robust sort by time-of-day
     times = pd.Index(avg_feature_by_time.index)

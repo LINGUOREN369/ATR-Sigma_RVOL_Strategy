@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.cm as cm
 import matplotlib.colors as mcolors
+import matplotlib.ticker as mtick
 
 from pathlib import Path
 import config
@@ -15,63 +16,57 @@ def intraday_feature_trend_viz(avg_feature_sorted):
     The df is generated through function in intraday_handler.py 
     """
     plt.figure(figsize=(12, 6))
-
-    # Use actual dates as legend labels
-    day_labels = [str(d) for d in tail_block.index]
-
-    for i, (d, row) in enumerate(tail_block.iterrows()):
-        y = row.iloc[order].values
-        # label every day (could be noisy; feel free to thin this)
-        plt.plot(tick_labels, y, alpha=0.18, linewidth=1, label=day_labels[i])
-
-    # Plot the average line on top
-    plt.plot(tick_labels, avg_sorted.values, linewidth=2,
-                label=f"Average {feature} by time (last {look_back_days} days)")
-
-    # Nice title/date range from the same slice you plotted
-    start_date = tail_block.index.min()
-    end_date = tail_block.index.max()
-    plt.title(
-        f"{feature.capitalize()} by Time of Day (last {look_back_days} days)\n"
-        f"{start_date} → {end_date}"
-    )
+    times = [str(t) for t in avg_feature_sorted.index]
+    plt.plot(times, avg_feature_sorted.values, marker='o')
+    
+    ax = plt.gca()
+    if avg_feature_sorted.name.lower() == "average volume":
+        # # Option A: show commas
+        # ax.ticklabel_format(style="plain", axis="y")
+        # ax.yaxis.set_major_formatter(
+        #     mtick.FuncFormatter(lambda x, _: f"{int(x):,}")
+        # )
+        # Option B: show in millions (uncomment if preferred)
+        ax.yaxis.set_major_formatter(
+            mtick.FuncFormatter(lambda x, _: f"{x/1e6:.1f}M")
+        )
+        
+    plt.title(f'Intraday {avg_feature_sorted.name} Trend with {config.intraday_rolling_window} Days Rolling Window')
+    plt.xticks(rotation=45)
     plt.xlabel("Time of Day")
-    plt.ylabel(feature)
-    plt.xticks(tick_labels, rotation=90)
+    plt.ylabel("Average Feature Value")
     plt.grid(True)
-    plt.legend(ncol=2)  # adjust as you like
     plt.tight_layout()
-
-    # Ensure folder exists and save
-    Path("stock_image").mkdir(parents=True, exist_ok=True)
-    out_path = (
-        f"stock_image/Average_{feature}_by_Time_of_Day_over_{look_back_days}_days_"
-        f"from_{start_date}_to_{end_date}.png"
-    )
-    plt.savefig(out_path, bbox_inches="tight", dpi=300)
-    # plt.show()  # enable if you want to display interactively
+    plt.savefig(Path(config.FIGURE_PATH) / f"{config.stock_ticker}_intraday_{avg_feature_sorted.name.replace(' ', '_').lower()}_trend.png")
+    plt.show()
 
 
 
-def intraday_rvol_viz(rvol_df):
+def intraday_rvol_viz(rvol_df, last_n_days=10):
     df = rvol_df.copy()
     df["Date"] = df.index.date
     df["Hour"] = df.index.hour
-    
-    # Sort unique dates so earliest → lightest, latest → darkest
-    unique_dates = sorted(df["Date"].unique())
+
+    # Get only the last n unique dates
+    unique_dates = sorted(df["Date"].unique())[-last_n_days:]
+
+    # Restrict dataframe
+    df = df[df["Date"].isin(unique_dates)]
+
+    # Rebuild colormap based only on these dates
     norm = mcolors.Normalize(vmin=0, vmax=len(unique_dates)-1)
-    cmap = cm.get_cmap("viridis_r")  # you can try "plasma", "cividis", etc.
-    
+    cmap = cm.get_cmap("viridis_r")
+
     plt.figure(figsize=(20, 10))
-    for i, (date, group) in enumerate(df.groupby("Date")):
+    for i, (date, group) in enumerate(sorted(df.groupby("Date"))):
         color = cmap(norm(i))  # darker for later dates
-        plt.plot(group["Hour"], group["Intraday_RVOL_cum"], 
+        plt.plot(group["Hour"], group["Intraday_RVOL_cum"],
                  label=str(date), color=color)
-    
+
     plt.xlabel("Hour of Day")
     plt.ylabel("Intraday RVOL Cumulative")
-    plt.title("Intraday Relative Volume (Cumulative) by Hour")
+    plt.title(f"Intraday Relative Volume (Cumulative) — last {last_n_days} days")
     plt.legend()
     plt.grid(True)
+    plt.savefig(Path(config.FIGURE_PATH) / f"{config.stock_ticker}_intraday_rvol_cumulative_last_{last_n_days}_days.png")
     plt.show()

@@ -2,17 +2,11 @@
 This module contains configuration constants for the ATR-Sigma RVOL Strategy.
 """
 
-
-
 ## Path of the folder to save figures
 FIGURE_PATH = "./stock_image/"
 
 ## stock ticker to analyze
 stock_ticker = "CRCL"
-
-
-## intraday file path
-INTRADAY_FILEPATH = f"./data/{stock_ticker}_60min.csv"
 
 ## Number of days of daily data to load
 # •	30 days → very short-term view (good for testing, not for trend context).
@@ -28,7 +22,18 @@ daily_date_range = 60
 # 	•	30 → smoother, better for bigger swings.
 # Swing trade 1-2 weeks: 14 is good to balance responsiveness and noise.
 # Position trade 1 month+: 20 or 30 is better.
-look_back_days_daily = 14
+daily_rolling_window = 14
+
+
+## Lookback for ATR calculation (in days)
+# ATR is often calculated over 14 days, but for a shorter-term view, 5 days can be used.
+# If you want fast signal: keep 5. For swing stability: set 10–14.
+atr_daily_rolling_window = 10
+
+
+
+## intraday file path
+INTRADAY_FILEPATH = f"./data/{stock_ticker}_60min.csv"
 
 
 ## Window for intraday (hourly) features.
@@ -36,10 +41,8 @@ look_back_days_daily = 14
 # 	•	10 → 2 trading weeks.
 # 	•	20 → ~1 month.
 # 10 is a good balance to capture short-term intraday trends without too much noise.
-look_back_days_hourly = 10
+intraday_rolling_window = 5
 
 
-## Lookback for ATR calculation (in days)
-# ATR is often calculated over 14 days, but for a shorter-term view, 5 days can be used.
-# If you want fast signal: keep 5. For swing stability: set 10–14.
-atr_look_back_days = 10
+
+

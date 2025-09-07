@@ -88,23 +88,12 @@ def fetch_data_to_csv(symbol: str, interval: str = "60min", outputsize: str = "f
     print(f"Saved daily data: {daily_df.shape}")
 
 if __name__ == "__main__":
-    ## python apache_data.py NVDA --interval 15min --outputsize compact
-    parser = argparse.ArgumentParser(description="Fetch Alpha Vantage stock data")
-    parser.add_argument("symbol", help="Stock ticker symbol, e.g. AAPL or NVDA")
-    parser.add_argument(
-        "--interval",
-        default="60min",
-        choices=["1min", "5min", "15min", "30min", "60min"],
-        help="Intraday interval (default: 60min)",
-    )
-    parser.add_argument(
-        "--outputsize",
-        default="full",
-        choices=["compact", "full"],
-        help="Data output size (default: full)",
-    )
+    stock_ticker_list = ["PYPL",
+                     "CRCL",
+                     "NVDA",
+                     "VOO",
+                     "RUM",
+                     "COIN"]
 
-    args = parser.parse_args()
-
-    Path("data").mkdir(parents=True, exist_ok=True)
-    fetch_data_to_csv(args.symbol, interval=args.interval, outputsize=args.outputsize)
+    for stock_ticker in stock_ticker_list:
+        fetch_data_to_csv(stock_ticker, interval="60min", outputsize="full")

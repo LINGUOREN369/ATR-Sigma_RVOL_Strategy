@@ -76,7 +76,7 @@ def intraday_rvol_viz(rvol_df, look_back_period, show_n_days=10, show=config.SHO
     
     save_path = Path(config.FIGURE_PATH)
     save_path.mkdir(parents=True, exist_ok=True)
-    plt.savefig(save_path / f"{config.STOCK_TICKER}_intraday_rvol_cumulative_last_{show_n_days}_days_with_{look_back_period}_day_lookback.png")
+    plt.savefig(save_path / f"{config.STOCK_TICKER}_intraday_rvol_last_{show_n_days}_days_with_{look_back_period}_day_lookback.png")
 
     if show:
         plt.show()

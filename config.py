@@ -3,7 +3,7 @@ This module contains configuration constants for the ATR-Sigma RVOL Strategy.
 """
 
 ## stock ticker to analyze
-STOCK_TICKER = "PYPL"
+STOCK_TICKER = "VOO"
 
 
 ## Show plots when running test.py

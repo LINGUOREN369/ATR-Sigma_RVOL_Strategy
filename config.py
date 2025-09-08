@@ -11,7 +11,7 @@ SHOW_PLOTS = False
 
 ## Path of the folder to save figures
 FIGURE_PATH = f"./stock_image/{STOCK_TICKER}/"
-FIG_SIZE = (20,5)
+FIG_SIZE = (20,6)
 
 
 ## Report Path (compiled images, etc)
@@ -22,7 +22,7 @@ REPORT_PATH = f"./report/{STOCK_TICKER}/"
 # •	60–90 days → gives 2–3 months, enough to see recent trends.
 # •	180+ days → better if you want context across rate cycles, IPO, or market phases.
 # 60-90 is recommended for a balance of context and recency.
-DAILY_DATE_RANGE = [30, 60, 90]
+DAILY_DATE_RANGE = [15, 30, 60, 120]
 
 
 ## Rolling window for daily features (ATR, RVOL, SMA, etc).

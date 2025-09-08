@@ -58,7 +58,7 @@ def intraday_feature_trend(df, feature, look_back_days):
     # Average over last N days
     tail_block = df_pivot.tail(look_back_days)
     avg_feature_by_time = tail_block.mean(axis=0)
-    avg_feature_by_time.name = f"Average {feature.capitalize()}"
+    avg_feature_by_time.name = f"Average {feature.capitalize()}_{look_back_days} Days Look Back"
 
     # Robust sort by time-of-day
     times = pd.Index(avg_feature_by_time.index)
@@ -80,7 +80,7 @@ def intraday_expected_cum_rvol(df_time_volume, look_back_days):
     pivot_cum = cum_vol_df.pivot_table(index="Date", columns="Time", values="Cumulative_Volume")
     # Not include the volume from the current day
     exp_curve = pivot_cum.rolling(window=look_back_days).mean().shift(1)
-    exp_curve_long = exp_curve.stack().reset_index(name="Expected_Cumulative_Volume")
+    exp_curve_long = exp_curve.stack().reset_index(name=f"Expected_Cum_Vol_{look_back_days}")
     exp_curve_long["Datetime"] = pd.to_datetime(exp_curve_long["Date"].astype(str) + " " + exp_curve_long["Time"].astype(str))
     exp_curve_long = exp_curve_long.drop(columns=["Date", "Time"])
     exp_curve_long = exp_curve_long.set_index("Datetime").sort_index()
@@ -94,5 +94,5 @@ def intraday_rvol(min_df: pd.DataFrame, exp_cum_df: pd.DataFrame, look_back_days
     df = min_df[["close", "volume"]].copy().sort_index()
     df["CumVolume"] = df.groupby(df.index.date)["volume"].cumsum()
     joined = df.join(exp_cum_df, how="left")
-    joined["Intraday_RVOL_cum"] = joined["CumVolume"] / joined["Expected_Cumulative_Volume"]
+    joined[f"Intraday_RVOL_{look_back_days}"] = joined["CumVolume"] / joined[f"Expected_Cum_Vol_{look_back_days}"]
     return joined

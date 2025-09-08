@@ -1,139 +1,174 @@
+⸻
 
-# ATR-Sigma_RVOL_Strategy
-A modular Python framework to analyze and visualize stock data using Average True Range (ATR) and Relative Volume (RVOL) indicators. The project is structured into distinct components for configuration, data acquisition, processing, visualization, and image stitching.
+📈 ATR-Sigma RVOL Strategy
 
-## Project Structure
-The project is organized into the following key modules:
+A modular Python framework to analyze and visualize stock data using Average True Range (ATR) and Relative Volume (RVOL) indicators.
+The project is organized into distinct components for configuration, data acquisition, processing, visualization, and image stitching.
 
-1) config.py — central settings
+⸻
 
-Holds all knobs/paths used everywhere, e.g.
+📂 Project Structure
+
+config.py — Central Settings
+
+Holds all knobs/paths used everywhere (single source of truth).
 	•	STOCK_TICKER (e.g., "VOO")
-	•	FIGURE_PATH (folder where individual charts/PNGs are saved)
-	•	REPORT_PATH (folder where stitched/composite images go)
+	•	FIGURE_PATH → folder where individual charts/PNGs are saved
+	•	REPORT_PATH → folder where stitched/composite images go
 	•	Daily knobs: DAILY_DATE_RANGE, DAILY_ROLLING_WINDOW, ATR_DAILY_ROLLING_WINDOW
 	•	Intraday knobs: INTRADAY_ROLLING_WINDOW, SHOW_N_DAYS
-	•	Data paths like INTRADAY_FILEPATH if you save a derived CSV for hourly bars
-
-Think of this as the single source of truth; all other scripts read from it.
+	•	Data paths: e.g., INTRADAY_FILEPATH if you save derived CSVs for hourly bars
 
 ⸻
 
-2) download_data.py — get raw market data to CSV
+download_data.py — Get Raw Market Data
 
-Typical responsibilities:
-	•	Fetch daily and intraday bars (from your data vendor/API)
-	•	Normalize column names and write to ./data/{TICKER}_{interval}.csv
-	•	Provide helpers like:
+Responsible for fetching daily and intraday bars (from your vendor/API).
+	•	Fetches daily & intraday data
+	•	Normalizes column names
+	•	Writes to:
+	•	./data/{TICKER}_daily.csv
+	•	./data/{TICKER}_{interval}.csv
+
+Helpers:
 	•	fetch_data_to_csv(ticker, interval="1d"|"60min"|"15min"|...)
-	•	Maybe small CLI in if __name__ == "__main__": to download for STOCK_TICKER
+	•	Optional CLI via if __name__ == "__main__":
 
-Output: CSV files under ./data/ for downstream processing.
-
-⸻
-
-3) daily_handler.py — clean & feature engineering for daily
-
-Reads your daily CSV and returns tidy DataFrames ready for plotting:
-	•	daily_data_handler(ticker, daterange) → DataFrame with tz-aware index
-	•	daily_data_feature(df_daily, feature) → picks/renames feature columns (close/volume)
-	•	daily_data_rvol(df_feature, look_back_days) → computes daily RVOL
-	•	daily_data_atr(df_daily, lookback) → computes ATR (TR rolling mean)
-
-Output: in-memory DataFrames for close/volume/RVOL/ATR that daily_viz.py will plot.
+Output: CSV files in ./data/ for downstream processing.
 
 ⸻
 
-4) daily_viz.py — make daily charts
+daily_handler.py — Daily Data Processing
 
-Consumes outputs from daily_handler.py and writes PNGs to FIGURE_PATH using standardized file names so the stitcher can discover them later.
+Cleans raw daily data and builds features for plotting.
+	•	daily_data_handler(ticker, daterange) → returns DataFrame with tz-aware index
+	•	daily_data_feature(df, feature) → extracts features (close, volume, etc.)
+	•	daily_data_rvol(df, look_back_days) → computes daily RVOL
+	•	daily_data_atr(df, lookback) → computes ATR (True Range rolling mean)
 
-You typically create:
-	•	Daily close panels (e.g., 30/60/90 days):
-	•	VOO_daily_close_30.png, VOO_daily_close_60.png, VOO_daily_close_90.png
-	•	Daily volume panels: VOO_daily_volume_30.png, …
-	•	Daily RVOL panels (lookback shown in title, file keyed by range): VOO_daily_rvol_30.png, …
-	•	Daily ATR panels: VOO_daily_atr_30.png, …
-
-Output: individual PNGs in FIGURE_PATH.
+Output: DataFrames for close, volume, RVOL, and ATR.
 
 ⸻
 
-5) intraday_handler.py — clean & feature engineering for intraday
+daily_viz.py — Daily Charts
 
-Works on your hourly (or 15/30min) CSV:
+Generates daily PNG charts (saved to FIGURE_PATH) with standardized names.
+	•	Daily close:
+	•	VOO_daily_close_30.png
+	•	VOO_daily_close_60.png
+	•	VOO_daily_close_90.png
+	•	Daily volume: VOO_daily_volume_30.png, …
+	•	Daily RVOL: VOO_daily_rvol_30.png, …
+	•	Daily ATR: VOO_daily_atr_30.png, …
+
+Output: PNG charts for each daily feature.
+
+⸻
+
+intraday_handler.py — Intraday Data Processing
+
+Processes intraday (hourly/15min/30min) CSVs.
 	•	Builds time-of-day pivots
-	•	Computes intraday RVOL curves (per time slot vs historical average)
-	•	Computes average by time of day for close and volume over rolling windows (5/10/20 days)
+	•	Computes intraday RVOL curves vs. historical average
+	•	Computes time-of-day averages for close & volume (lookbacks: 5, 10, 20 days)
 
-Output: tidy DataFrames for:
-	•	average close by time (5/10/20-day look-back)
-	•	average volume by time (5/10/20-day look-back)
-	•	last SHOW_N_DAYS intraday RVOL lines (one line per day across hours)
+Output: DataFrames for:
+	•	average close by time
+	•	average volume by time
+	•	last SHOW_N_DAYS intraday RVOL lines
 
 ⸻
 
-6) intraday_viz.py — make intraday charts
+intraday_viz.py — Intraday Charts
 
-Writes PNGs with specific patterns so the stitcher can group them:
+Creates intraday PNG charts (saved to FIGURE_PATH).
 	•	Average close:
 	•	VOO_intraday_average_close_5_days_look_back.png
 	•	VOO_intraday_average_close_10_days_look_back.png
 	•	VOO_intraday_average_close_20_days_look_back.png
 	•	Average volume:
-	•	VOO_intraday_average_volume_5_days_look_back.png (and 10/20)
-	•	Intraday RVOL (last N trading days, vary the lookback window used to compute expected volume):
+	•	VOO_intraday_average_volume_5_days_look_back.png (also 10/20)
+	•	Intraday RVOL (last N days, varying lookback):
 	•	VOO_intraday_rvol_last_10_days_with_5_day_lookback.png
 	•	VOO_intraday_rvol_last_10_days_with_10_day_lookback.png
 	•	VOO_intraday_rvol_last_10_days_with_20_day_lookback.png
 
-Output: individual PNGs in FIGURE_PATH.
+Output: Intraday PNG charts.
 
 ⸻
 
-7) image_stack_patch.py — stitch related PNGs into composites
+image_stack_patch.py — Image Stitcher
 
-Discovers images by filename pattern and stacks period variants vertically into a single composite for quick review.
+Discovers related PNGs and stitches period variants vertically into composites.
 
-It recognizes three families:
+Recognized families:
 	1.	Daily:
-^{TICKER}_(daily_[a-z0-9_]+)_(\d+)\.png$
-	•	e.g., base = daily_close, periods = 30, 60, 90 → output
-VOO_daily_close_30-60-90.png
+
+{TICKER}_daily_{feature}_{period}.png
+→ VOO_daily_close_30-60-90.png
+
+
 	2.	Intraday averages (close/volume):
-^{TICKER}_(intraday_average_(close|volume))_(\d+)_days_look_back\.png$
-	•	e.g., base = intraday_average_close, periods = 5,10,20 →
-VOO_intraday_average_close_5-10-20.png
-	3.	Intraday RVOL (last N days, vary lookback):
-^{TICKER}_intraday_rvol_last_(show)_days_with_(period)_day_lookback\.png
-	•	grouped as base = intraday_rvol_last_{show}_days_with_lookback
-	•	periods = 5,10,20 →
-VOO_intraday_rvol_last_10_days_with_lookback_5-10-20.png
 
-Saves composites to REPORT_PATH.
+{TICKER}_intraday_average_close_{period}_days_look_back.png
+→ VOO_intraday_average_close_5-10-20.png
 
-## Usage
-Run test.py to execute the full pipeline:
-    1.	Download daily and intraday data to CSV
-    2.	Process daily data, generate daily charts
-    3.	Process intraday data, generate intraday charts
-    4.	Stitch related charts into composites for review
 
-Example:
-```bash
+	3.	Intraday RVOL:
+
+{TICKER}_intraday_rvol_last_{show}_days_with_{period}_day_lookback.png
+→ VOO_intraday_rvol_last_10_days_with_lookback_5-10-20.png
+
+
+
+Output: stitched composites saved in REPORT_PATH.
+
+⸻
+
+▶️ Usage
+
+Run the full pipeline (example with test.py):
+	1.	Download daily & intraday data to CSV
+	2.	Process daily data and generate daily charts
+	3.	Process intraday data and generate intraday charts
+	4.	Stitch charts into composites for review
+
 python test.py
-```
-This will create individual PNGs in FIGURE_PATH and stitched composites in REPORT_PATH.
 
-## Dependencies
-This project requires Python 3.9+ and the following libraries:
-	•	Core libraries
+	•	Individual PNGs → FIGURE_PATH
+	•	Stitched composites → REPORT_PATH
+
+⸻
+
+📦 Dependencies
+
+Requires Python 3.9+ and:
+	•	Core
 	•	pandas → data manipulation
 	•	numpy → numerical computations
-	•	matplotlib → plotting daily & intraday charts
-	•	Pillow (PIL) → image stacking (for image_stack_patch.py)
+	•	matplotlib → plotting
+	•	Pillow (PIL) → image stitching
 	•	re (built-in) → regex for filename parsing
 	•	pathlib (built-in) → filesystem paths
-	•	subprocess (built-in, optional) → if you use run_all.py
-	•	Optional (if downloading market data automatically)
-	•	alpha_vantage or other API client (depending on your source)
+	•	subprocess (built-in, optional for batch running)
+	•	Optional
+	•	alpha_vantage or other market-data API client
+
+Install via pip:
+
+pip install pandas numpy matplotlib pillow alpha_vantage
+
+Or use a requirements.txt:
+
+pandas
+numpy
+matplotlib
+pillow
+alpha_vantage
+
+
+⸻
+
+✨ With this modular setup, you can swap tickers, change lookback windows, or adjust plots by editing just config.py.
+
+⸻

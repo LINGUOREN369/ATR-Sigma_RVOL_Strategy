@@ -14,7 +14,7 @@ def daily_data_feature_viz(df_feature: pd.DataFrame, feature: str, show = config
     - feature (str): The feature/column name to visualize.
     """
     daily_date_range = df_feature.shape[0]
-    plt.figure(figsize=(20, 10))
+    plt.figure(figsize=config.FIG_SIZE)
     plt.plot(df_feature.index, df_feature[feature], marker="o")
     plt.title(
         (
@@ -48,7 +48,7 @@ def daily_data_feature_viz(df_feature: pd.DataFrame, feature: str, show = config
     save_dir.mkdir(parents=True, exist_ok=True)
 
     # Build full file path
-    save_path = save_dir / f"{config.STOCK_TICKER}_{daily_date_range}_daily_{feature}.png"
+    save_path = save_dir / f"{config.STOCK_TICKER}_daily_{feature}_{daily_date_range}.png"
 
     plt.savefig(save_path)
     
@@ -68,8 +68,8 @@ def daily_data_rvol_viz(volume_df: pd.DataFrame, lookback: int, show = config.SH
     """
     
     daily_date_range = volume_df.shape[0]
-    
-    plt.figure(figsize=(20, 10))
+
+    plt.figure(figsize=config.FIG_SIZE)
     plt.plot(volume_df.index, volume_df["rvol"], label="RVOL")
     for x, y in zip(volume_df.index, volume_df["rvol"]):
         plt.text(
@@ -86,7 +86,7 @@ def daily_data_rvol_viz(volume_df: pd.DataFrame, lookback: int, show = config.SH
     
     save_path = Path(config.FIGURE_PATH)
     save_path.mkdir(parents=True, exist_ok=True)
-    plt.savefig(save_path / f"{config.STOCK_TICKER}_{daily_date_range}_daily_rvol.png")
+    plt.savefig(save_path / f"{config.STOCK_TICKER}_daily_rvol_{daily_date_range}.png")
     plt.tight_layout()
    
     if show:
@@ -105,8 +105,8 @@ def daily_data_atr_viz(atr_df: pd.DataFrame, lookback: int, show = config.SHOW_P
 
     """
     daily_date_range = atr_df.shape[0]
-    
-    plt.figure(figsize=(20, 10))
+
+    plt.figure(figsize=config.FIG_SIZE)
     plt.plot(atr_df.index, atr_df, label=f"ATR (n={lookback})")
     plt.title(f"{config.STOCK_TICKER} ATR {daily_date_range} day range with {lookback}-day lookback \n from {atr_df.index.min().date()} to {atr_df.index.max().date()}")
     plt.xlabel("Date")
@@ -118,7 +118,7 @@ def daily_data_atr_viz(atr_df: pd.DataFrame, lookback: int, show = config.SHOW_P
     
     save_path = Path(config.FIGURE_PATH)
     save_path.mkdir(parents=True, exist_ok=True)
-    plt.savefig(save_path / f"{config.STOCK_TICKER}_{daily_date_range}_daily_atr.png")
+    plt.savefig(save_path / f"{config.STOCK_TICKER}_daily_atr_{daily_date_range}.png")
     
     if show:
         plt.show()

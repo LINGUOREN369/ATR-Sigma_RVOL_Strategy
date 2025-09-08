@@ -11,7 +11,11 @@ SHOW_PLOTS = False
 
 ## Path of the folder to save figures
 FIGURE_PATH = f"./stock_image/{STOCK_TICKER}/"
-FIG_SIZE = (16,4)
+FIG_SIZE = (20,5)
+
+
+## Report Path (compiled images, etc)
+REPORT_PATH = f"./report/{STOCK_TICKER}/"
 
 ## Number of days of daily data to load
 # •	30 days → very short-term view (good for testing, not for trend context).

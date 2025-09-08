@@ -15,7 +15,7 @@ def intraday_feature_trend_viz(avg_feature_sorted, show = config.SHOW_PLOTS):
     Param: avg_feature_sorted - a pandas Series with the average feature values sorted by time of day
     The df is generated through function in intraday_handler.py 
     """
-    plt.figure(figsize=(16, 4))
+    plt.figure(figsize=config.FIG_SIZE)
     times = [str(t) for t in avg_feature_sorted.index]
     plt.plot(times, avg_feature_sorted.values, marker='o')
     
@@ -39,7 +39,7 @@ def intraday_feature_trend_viz(avg_feature_sorted, show = config.SHOW_PLOTS):
     plt.tight_layout()
     save_path = Path(config.FIGURE_PATH)
     save_path.mkdir(parents=True, exist_ok=True)
-    plt.savefig(save_path / f"{config.STOCK_TICKER}_intraday_{avg_feature_sorted.name.replace(' ', '_').lower()}_trend.png")
+    plt.savefig(save_path / f"{config.STOCK_TICKER}_intraday_{avg_feature_sorted.name.replace(' ', '_').lower()}.png")
 
     if show:
         plt.show()
@@ -62,7 +62,7 @@ def intraday_rvol_viz(rvol_df, look_back_period, show_n_days=10, show=config.SHO
     norm = mcolors.Normalize(vmin=0, vmax=len(unique_dates)-1)
     cmap = cm.get_cmap("viridis_r")
 
-    plt.figure(figsize=(20, 10))
+    plt.figure(figsize=config.FIG_SIZE)
     for i, (date, group) in enumerate(sorted(df.groupby("Date"))):
         color = cmap(norm(i))  # darker for later dates
         plt.plot(group["Hour"], group[f"Intraday_RVOL_{look_back_period}"], marker='o', mfc=color,

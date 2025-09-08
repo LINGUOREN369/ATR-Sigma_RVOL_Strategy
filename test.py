@@ -5,6 +5,7 @@ import matplotlib.cm as cm
 import matplotlib.colors as mcolors
 from pathlib import Path
 import config
+import runpy
 
 from daily_handler import (
     daily_data_handler, 
@@ -29,6 +30,7 @@ from intraday_viz import (
 	intraday_rvol_viz,
 )
 
+from image_stack_patch import patch_images
 
 ## Load and process daily data
 # Both daily and intraday
@@ -73,3 +75,7 @@ for window in intraday_rolling_windows:
     intraday_feature_trend_viz(intraday_volume_df)
     intraday_feature_trend_viz(intraday_close_df)
     intraday_rvol_viz(intraday_rvol_df, window, show_n_days=n_days)
+
+
+# Patch images
+patch_images()

@@ -73,6 +73,7 @@ def intraday_rvol_viz(rvol_df, look_back_period, show_n_days=10, show=config.SHO
     plt.title(f"{config.STOCK_TICKER} - Intraday Relative Volume — last {show_n_days} days with {look_back_period}-day look-back")
     plt.legend()
     plt.grid(True)
+    plt.tight_layout()
     
     save_path = Path(config.FIGURE_PATH)
     save_path.mkdir(parents=True, exist_ok=True)

@@ -39,7 +39,7 @@ def intraday_feature_trend_viz(avg_feature_sorted, show = config.SHOW_PLOTS):
     plt.tight_layout()
     save_path = Path(config.FIGURE_PATH)
     save_path.mkdir(parents=True, exist_ok=True)
-    plt.savefig(save_path / f"{config.STOCK_TICKER}_intraday_{avg_feature_sorted.name.replace(' ', '_').lower()}.png")
+    plt.savefig(save_path / f"{config.STOCK_TICKER}_intraday_{config.INTRADAY_INTERVAL}_{avg_feature_sorted.name.replace(' ', '_').lower()}.png")
 
     if show:
         plt.show()
@@ -57,27 +57,22 @@ def intraday_rvol_viz(rvol_df, look_back_period, show_n_days=10, show=config.SHO
 
     # Restrict dataframe
     df = df[df["Date"].isin(unique_dates)]
-
-    # Rebuild colormap based only on these dates
-    norm = mcolors.Normalize(vmin=0, vmax=len(unique_dates)-1)
-    cmap = cm.get_cmap("viridis_r")
-
+    # Create pivot table for heatmap
+    pivot_df = df.pivot(index="Hour", columns="Date", values=f"Intraday_RVOL_{look_back_period}")
     plt.figure(figsize=config.FIG_SIZE)
-    for i, (date, group) in enumerate(sorted(df.groupby("Date"))):
-        color = cmap(norm(i))  # darker for later dates
-        plt.plot(group["Hour"], group[f"Intraday_RVOL_{look_back_period}"], marker='o', mfc=color,
-                 label=str(date), color=color)
+    im = plt.imshow(pivot_df.T, aspect='auto', cmap="viridis_r", origin='lower')
 
+    plt.colorbar(im, label=f"Intraday RVOL ({look_back_period}-day look-back)")
+    plt.xticks(ticks=np.arange(len(pivot_df.index)), labels=pivot_df.index)
+    plt.yticks(ticks=np.arange(len(pivot_df.columns)), labels=[str(d) for d in pivot_df.columns])
     plt.xlabel("Hour of Day")
-    plt.ylabel("Intraday RVOL Cumulative")
-    plt.title(f"{config.STOCK_TICKER} - Intraday Relative Volume — last {show_n_days} days with {look_back_period}-day look-back")
-    plt.legend()
-    plt.grid(True)
+    plt.ylabel("Date")
+    plt.title(f"{config.STOCK_TICKER} - Heatmap of Intraday RVOL — last {show_n_days} days with {look_back_period}-day look-back")
     plt.tight_layout()
-    
+
     save_path = Path(config.FIGURE_PATH)
     save_path.mkdir(parents=True, exist_ok=True)
-    plt.savefig(save_path / f"{config.STOCK_TICKER}_intraday_rvol_last_{show_n_days}_days_with_{look_back_period}_day_lookback.png")
+    plt.savefig(save_path / f"{config.STOCK_TICKER}_intraday_{config.INTRADAY_INTERVAL}_rvol_last_{show_n_days}_days_with_{look_back_period}_day_lookback.png")
 
     if show:
         plt.show()

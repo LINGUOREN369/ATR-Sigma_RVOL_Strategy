@@ -40,7 +40,7 @@ def daily_data_feature(df_daily: pd.DataFrame, feature: str) -> pd.DataFrame:
 
 
 
-def daily_data_rvol(volume: pd.DataFrame, lookback: int) -> pd.DataFrame:
+def daily_data_rvol(volume: pd.DataFrame, lookback: int, ema: bool) -> pd.DataFrame:
     """
     Compute RVOL from a dataframes of volume indexed by date.
     
@@ -51,9 +51,11 @@ def daily_data_rvol(volume: pd.DataFrame, lookback: int) -> pd.DataFrame:
     Returns:
     - pd.DataFrame: DataFrame containing the RVOL feature.
     """
-    
-    ## use ema
-    volume["avgvol"] = volume["volume"].ewm(span=lookback, adjust=False).mean().shift(1)
+    if ema:
+        volume["avgvol"] = volume["volume"].ewm(span=lookback, adjust=False).mean().shift(1)
+    else:
+        volume["avgvol"] = volume["volume"].rolling(window=lookback, min_periods=lookback).mean().shift(1)
+
     volume["rvol"] = volume["volume"] / volume["avgvol"]
     return volume[["rvol"]].copy()
 

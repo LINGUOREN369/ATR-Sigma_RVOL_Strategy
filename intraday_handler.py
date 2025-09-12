@@ -41,11 +41,11 @@ def intraday_read_csv_correct_time(file_path, assume="ET"):
     df_rth = df_rth[["4. close", "5. volume"]]  # keep only close and volume
     df_rth.columns = ["close", "volume"]
 
-    return df_rth
+    return df_rth.copy()
 
 
 
-def intraday_feature_trend(df, feature, look_back_days):
+def intraday_feature_trend(df, feature, look_back_days, ema = True):
     """
     Visualize the trend of a specific feature by time of day over a look-back period.
     Returns the *sorted* average-by-time series used in the plot.
@@ -57,7 +57,11 @@ def intraday_feature_trend(df, feature, look_back_days):
 
     # Average over last N days
     tail_block = df_pivot.tail(look_back_days)
-    avg_feature_by_time = tail_block.mean(axis=0)
+    if ema:
+        avg_feature_by_time = tail_block.ewm(span=look_back_days, adjust=False).mean().iloc[-1]
+    else:
+        avg_feature_by_time = tail_block.mean(axis=0)
+        
     avg_feature_by_time.name = f"Average {feature.capitalize()}_{look_back_days} Days Look Back"
 
     # Robust sort by time-of-day
@@ -69,22 +73,29 @@ def intraday_feature_trend(df, feature, look_back_days):
     # tick_labels = times.astype(str).to_numpy()[order]
     avg_sorted = avg_feature_by_time.iloc[order]
     
-    return avg_sorted
+    return avg_sorted.copy()
 
 
-def intraday_expected_cum_rvol(df_time_volume, look_back_days):
+def intraday_expected_cum_rvol(df_time_volume, look_back_days, ema = True):
+    """
+    Computes expected cumulative volume at each time of day based on historical intraday volume patterns.
+    Returns a DataFrame with Datetime index and a column for expected cumulative volume.
+    """   
     cum_vol_df = df_time_volume.copy().sort_index()
     cum_vol_df["Date"] = cum_vol_df.index.date
     cum_vol_df["Time"] = cum_vol_df.index.time
     cum_vol_df["Cumulative_Volume"] = cum_vol_df.groupby("Date")["volume"].cumsum()
     pivot_cum = cum_vol_df.pivot_table(index="Date", columns="Time", values="Cumulative_Volume")
     # Not include the volume from the current day
-    exp_curve = pivot_cum.rolling(window=look_back_days).mean().shift(1)
+    if ema:
+        exp_curve = pivot_cum.ewm(span=look_back_days, adjust=False).mean().shift(1)
+    else:   
+        exp_curve = pivot_cum.rolling(window=look_back_days).mean().shift(1)
     exp_curve_long = exp_curve.stack().reset_index(name=f"Expected_Cum_Vol_{look_back_days}")
     exp_curve_long["Datetime"] = pd.to_datetime(exp_curve_long["Date"].astype(str) + " " + exp_curve_long["Time"].astype(str))
     exp_curve_long = exp_curve_long.drop(columns=["Date", "Time"])
     exp_curve_long = exp_curve_long.set_index("Datetime").sort_index()
-    return exp_curve_long
+    return exp_curve_long.copy()
 
 
 def intraday_rvol(min_df: pd.DataFrame, exp_cum_df: pd.DataFrame, look_back_days) -> pd.DataFrame:

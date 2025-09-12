@@ -3,6 +3,7 @@ from alpha_vantage.timeseries import TimeSeries
 from pathlib import Path
 import argparse
 import os
+import config
 
 API_KEY = os.getenv("ALPHA_VANTAGE_API_KEY")
 
@@ -84,16 +85,11 @@ def fetch_data_to_csv(symbol: str, interval: str = "60min", outputsize: str = "f
     intraday_df.to_csv(f"data/{symbol}_{interval}.csv")
     daily_df.to_csv(f"data/{symbol}_daily.csv")
 
-    print(f"Saved intraday data: {intraday_df.shape}")
-    print(f"Saved daily data: {daily_df.shape}")
+    print(f"Saved intraday data: {intraday_df.shape} to data/{symbol}_{interval}.csv")
+    print(f"Saved daily data: {daily_df.shape} to data/{symbol}_daily.csv")
 
 if __name__ == "__main__":
-    stock_ticker_list = ["PYPL",
-                     "CRCL",
-                     "NVDA",
-                     "VOO",
-                     "RUM",
-                     "COIN"]
+    stock_ticker_list = config.DOWNLOAD_STOCK_TICKER_LIST
 
     for stock_ticker in stock_ticker_list:
-        fetch_data_to_csv(stock_ticker, interval="60min", outputsize="full")
+        fetch_data_to_csv(stock_ticker, interval=config.INTRADAY_INTERVAL, outputsize= config.OUTPUTSIZE)

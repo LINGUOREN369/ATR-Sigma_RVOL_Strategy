@@ -5,6 +5,7 @@ import matplotlib.cm as cm
 import matplotlib.colors as mcolors
 from pathlib import Path
 import config
+import argparse
 import runpy
 
 from daily_handler import (
@@ -42,13 +43,26 @@ daily_rolling_window = config.DAILY_ROLLING_WINDOW
 atr_daily_rolling_window = config.ATR_DAILY_ROLLING_WINDOW
 daily_range = config.DAILY_DATE_RANGE
 
+## delte old images in the folder
+figure_path = Path(config.FIGURE_PATH)
+if figure_path.exists() and figure_path.is_dir():
+    for file in figure_path.glob("*.png"):
+        file.unlink()
+
+## Delete old report images in the folder
+report_path = Path(config.REPORT_PATH)
+if report_path.exists() and report_path.is_dir():
+    for file in report_path.glob("*.png"):
+        file.unlink()
+
+
 for daily_date_range in daily_range:
     # Load daily data and compute features
     df_daily = daily_data_handler(stock_ticker, daily_date_range)
     volume_df = daily_data_feature(df_daily, "volume")
     close_df = daily_data_feature(df_daily, "close")
-    daily_rvol_df = daily_data_rvol(volume_df, daily_rolling_window)
-    atr_df = daily_data_atr(df_daily, atr_daily_rolling_window)
+    daily_rvol_df = daily_data_rvol(volume_df, daily_rolling_window, ema=True)
+    atr_df = daily_data_atr(df_daily, atr_daily_rolling_window, method="wilder")
 
     # Visualize daily data
     daily_data_feature_viz(close_df, "close")
@@ -66,9 +80,9 @@ n_days = config.SHOW_N_DAYS
 for window in intraday_rolling_windows:
     # Load intraday data and compute features
     df_rth = intraday_read_csv_correct_time(intraday_filepath)
-    intraday_volume_df = intraday_feature_trend(df_rth, "volume", window)
-    intraday_close_df = intraday_feature_trend(df_rth, "close",window)
-    intraday_expected_cum_rvol_df = intraday_expected_cum_rvol(df_rth, window)
+    intraday_volume_df = intraday_feature_trend(df_rth, "volume", window, ema=True)
+    intraday_close_df = intraday_feature_trend(df_rth, "close", window, ema=True)
+    intraday_expected_cum_rvol_df = intraday_expected_cum_rvol(df_rth, window, ema=True)
     intraday_rvol_df = intraday_rvol(df_rth, intraday_expected_cum_rvol_df, window)
     
     # Visualize intraday data

@@ -12,7 +12,8 @@ The project is organized into distinct components for configuration, data acquis
 config.py — Central Settings
 
 Holds all knobs/paths used everywhere (single source of truth).
-	•	STOCK_TICKER (e.g., "VOO")
+
+- STOCK_TICKER (e.g., "VOO")
 	•	FIGURE_PATH → folder where individual charts/PNGs are saved
 	•	REPORT_PATH → folder where stitched/composite images go
 	•	Daily knobs: DAILY_DATE_RANGE, DAILY_ROLLING_WINDOW, ATR_DAILY_ROLLING_WINDOW

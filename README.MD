@@ -1,5 +1,3 @@
-Got it — here’s your project README rewritten cleanly in Markdown (easy to copy-paste into README.md):
-
 # ATR-Sigma RVOL Strategy
 
 A modular Python framework to analyze and visualize stock data using **Average True Range (ATR)** and **Relative Volume (RVOL)** indicators.  
@@ -166,5 +164,3 @@ pillow
 alpha_vantage
 
 ---
-
-Do you want me to also make a **shorter “Quick Start” version** (just install + run) for the top of the README, so new users don’t have to read the whole structure section first?

@@ -165,10 +165,3 @@ numpy
 matplotlib
 pillow
 alpha_vantage
-
-
-⸻
-
-✨ With this modular setup, you can swap tickers, change lookback windows, or adjust plots by editing just config.py.
-
-⸻

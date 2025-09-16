@@ -1,0 +1,17 @@
+name: capm
+channels:
+  - defaults
+  - https://repo.anaconda.com/pkgs/main
+  - https://repo.anaconda.com/pkgs/r
+dependencies:
+  - alpha_vantage
+  - libgfortran5
+  - matplotlib
+  - numpy[version='<2']
+  - openblas
+  - pandas
+  - python=3.10
+  - pyyaml
+  - scipy
+  - statsmodels
+prefix: /Users/linguoren/miniconda3/envs/capm

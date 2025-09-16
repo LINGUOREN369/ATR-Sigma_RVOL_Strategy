@@ -7,7 +7,7 @@ This module contains configuration constants for the ATR-Sigma RVOL Strategy.
 DOWNLOAD_STOCK_TICKER_LIST = [
                      "CRCL",
                      "VOO",
-                     "VOR"]
+                     "RUM"]
                     #  "RUM",
                     #  "COIN"]
 
@@ -21,7 +21,7 @@ OUTPUTSIZE = "full"
 
 
 ## stock ticker to analyze
-STOCK_TICKER = "VOO"
+STOCK_TICKER = "RUM"
 
 
 ## Show plots when running test.py
@@ -33,7 +33,7 @@ FIG_SIZE = (20,6)
 
 
 ## Report Path (compiled images, etc)
-REPORT_PATH = f"./report/{STOCK_TICKER}/"
+REPORT_PATH = f"./stock_report/{STOCK_TICKER}/"
 
 ## Number of days of daily data to load
 # •	30 days → very short-term view (good for testing, not for trend context).

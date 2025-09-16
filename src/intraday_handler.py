@@ -107,3 +107,13 @@ def intraday_rvol(min_df: pd.DataFrame, exp_cum_df: pd.DataFrame, look_back_days
     joined = df.join(exp_cum_df, how="left")
     joined[f"Intraday_RVOL_{look_back_days}"] = joined["CumVolume"] / joined[f"Expected_Cum_Vol_{look_back_days}"]
     return joined
+
+def intraday_rvol_sigma(rvol_df: pd.DataFrame, look_back_days: int, ema: bool = True) -> pd.DataFrame:
+    """
+    Computes rolling sigma of Intraday_RVOL.
+    """
+    df = rvol_df.copy().sort_index()
+    
+    mu_rvol = df[f"Intraday_RVOL_{look_back_days}"].rolling(window=look_back_days).mean()
+    sigma_rvol = df[f"Intraday_RVOL_{look_back_days}"].rolling(window=look_back_days).std()
+    

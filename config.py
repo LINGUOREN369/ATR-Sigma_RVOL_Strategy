@@ -34,7 +34,8 @@ STOCK_TICKER = "RUM"
 SHOW_PLOTS = False
 
 ## Path of the folder to save figures
-FIGURE_PATH = Path("./stock_image") / STOCK_TICKER
+FIGURE_BASE_PATH = Path("./stock_image")
+FIGURE_PATH = FIGURE_BASE_PATH / STOCK_TICKER
 FIG_SIZE = (20,6)
 
 
@@ -88,3 +89,31 @@ SIGMA_ROLLING_WINDOW = 20
 SHOW_N_DAYS = 5
 
 
+def _refresh_runtime_paths() -> None:
+    """Recompute derived paths after updates."""
+    global FIGURE_PATH, REPORT_PATH, INTRADAY_FILEPATH
+    FIGURE_PATH = FIGURE_BASE_PATH / STOCK_TICKER
+    REPORT_PATH = REPORT_BASE_PATH / STOCK_TICKER
+    INTRADAY_FILEPATH = DATA_PATH / f"{STOCK_TICKER}_{INTRADAY_INTERVAL}.csv"
+
+
+def apply_runtime_overrides(
+    *,
+    stock_ticker: str | None = None,
+    data_path: str | Path | None = None,
+    report_base_path: str | Path | None = None,
+    figure_base_path: str | Path | None = None,
+) -> None:
+    """Mutate config values for ad-hoc runs (e.g., CLI overrides)."""
+    global STOCK_TICKER, DATA_PATH, REPORT_BASE_PATH, FIGURE_BASE_PATH
+
+    if stock_ticker is not None:
+        STOCK_TICKER = stock_ticker
+    if data_path is not None:
+        DATA_PATH = Path(data_path)
+    if report_base_path is not None:
+        REPORT_BASE_PATH = Path(report_base_path)
+    if figure_base_path is not None:
+        FIGURE_BASE_PATH = Path(figure_base_path)
+
+    _refresh_runtime_paths()

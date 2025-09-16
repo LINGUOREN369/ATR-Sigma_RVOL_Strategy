@@ -1,4 +1,3 @@
-import argparse
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -30,48 +29,7 @@ from src.intraday_viz import (
 	intraday_rvol_viz,
 )
 
-def parse_args(argv=None):
-    parser = argparse.ArgumentParser(description="Run ATR-Sigma RVOL pipeline.")
-    parser.add_argument(
-        "--ticker", "-t",
-        dest="ticker",
-        help="Override stock ticker (e.g., CRCL)",
-    )
-    parser.add_argument(
-        "--data-path",
-        dest="data_path",
-        type=Path,
-        help="Custom data directory containing downloaded CSV files.",
-    )
-    parser.add_argument(
-        "--report-base",
-        dest="report_base_path",
-        type=Path,
-        help="Base directory where stitched reports should be written.",
-    )
-    parser.add_argument(
-        "--figure-base",
-        dest="figure_base_path",
-        type=Path,
-        help="Base directory for saving individual chart images.",
-    )
-    return parser.parse_args(argv)
-
-
-def apply_cli_overrides(args) -> None:
-    overrides = {}
-    if args.ticker:
-        overrides["stock_ticker"] = args.ticker
-    if args.data_path:
-        overrides["data_path"] = args.data_path
-    if args.report_base_path:
-        overrides["report_base_path"] = args.report_base_path
-    if args.figure_base_path:
-        overrides["figure_base_path"] = args.figure_base_path
-
-    if overrides:
-        config.apply_runtime_overrides(**overrides)
-
+from src.cli import configure_from_cli
 
 def _clean_pngs(directory: Path) -> None:
     if directory.exists() and directory.is_dir():
@@ -127,8 +85,7 @@ def run_pipeline() -> None:
 
 
 def main(argv=None) -> None:
-    args = parse_args(argv)
-    apply_cli_overrides(args)
+    configure_from_cli(argv)
     run_pipeline()
 
 

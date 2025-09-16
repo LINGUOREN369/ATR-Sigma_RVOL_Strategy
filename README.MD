@@ -38,11 +38,12 @@ Set your Alpha Vantage API key (for downloads):
 Edit `config.py` to control all behavior:
 
 - `STOCK_TICKER`: single symbol to analyze (e.g., `"VOO"`).
-- `DOWNLOAD_STOCK_TICKER_LIST`: symbols to fetch to `data/`.
+- `DOWNLOAD_STOCK_TICKER_LIST`: symbols to fetch to `DATA_PATH`.
 - `INTRADAY_INTERVAL`: intraday interval (`"1min"|"5min"|"15min"|"30min"|"60min"`).
 - `OUTPUTSIZE`: Alpha Vantage size (`"compact"|"full"`).
+- `DATA_PATH`: base directory for downloaded CSVs (default `/Users/linguoren/Documents/Market_Research/stock_data`).
 - `FIGURE_PATH`: folder for per‑chart PNGs (default `./stock_image/<TICKER>/`).
-- `REPORT_PATH`: folder for stitched composites (default `./stock_report/<TICKER>/`).
+- `REPORT_PATH`: folder for stitched composites (default `/Users/linguoren/Documents/Market_Research/stock_report/<TICKER>/`).
 - `DAILY_DATE_RANGE`: list of daily windows to render (e.g., `[30, 60, 120]`).
 - `DAILY_ROLLING_WINDOW`: RVOL lookback (days).
 - `ATR_DAILY_ROLLING_WINDOW`: ATR lookback (days; Wilder or SMA in code).
@@ -55,10 +56,10 @@ Edit `config.py` to control all behavior:
 
 ## Data Fetching
 
-The downloader saves CSVs to `data/` using Alpha Vantage:
+The downloader saves CSVs to `DATA_PATH` using Alpha Vantage (default `/Users/linguoren/Documents/Market_Research/stock_data`):
 
-- Intraday: `data/<TICKER>_<INTERVAL>.csv`
-- Daily: `data/<TICKER>_daily.csv`
+- Intraday: `<DATA_PATH>/<TICKER>_<INTERVAL>.csv`
+- Daily: `<DATA_PATH>/<TICKER>_daily.csv`
 
 Run the bulk fetcher for your list in `config.py`:
 
@@ -69,7 +70,7 @@ python -m src.download_data
 Notes:
 
 - Ensure `ALPHA_VANTAGE_API_KEY` is set in your environment.
-- Create the `data/` folder if it doesn’t exist yet.
+- The folder is created automatically if missing.
 - You may also load your own CSVs; see the expected columns in `src/intraday_handler.py` and `src/daily_handler.py`.
 
 ---
@@ -84,8 +85,16 @@ python -m src.test
 
 Output locations:
 
-- Individual charts → `FIGURE_PATH`
-- Stitched composites → `REPORT_PATH`
+- Individual charts → `FIGURE_PATH` (default `./stock_image/<TICKER>/`)
+- Stitched composites → `REPORT_PATH` (default `/Users/linguoren/Documents/Market_Research/stock_report/<TICKER>/`)
+
+Override settings per run without editing `config.py`:
+
+```bash
+python -m src.test --ticker CRCL
+# Additional examples
+python -m src.test --ticker VOO --data-path ~/custom_data --report-base ~/reports
+```
 
 ---
 
@@ -114,12 +123,13 @@ Composites saved to `REPORT_PATH` by `src/image_stack_patch.py`:
 ## Project Structure
 
 - `config.py`: Central settings and paths.
-- `src/download_data.py`: Pulls daily and intraday data to `data/` via Alpha Vantage.
+- `src/download_data.py`: Pulls daily and intraday data to `DATA_PATH` via Alpha Vantage.
 - `src/daily_handler.py`: Cleans daily data; computes RVOL and ATR.
 - `src/daily_viz.py`: Renders daily charts to `FIGURE_PATH`.
 - `src/intraday_handler.py`: Prepares intraday features and expected cumulative volume.
 - `src/intraday_viz.py`: Renders intraday averages and RVOL heatmaps.
 - `src/image_stack_patch.py`: Auto‑discovers PNGs and stitches composites.
+- `src/cli.py`: Shared CLI parser + config override helpers.
 - `playground/*.ipynb`: Notebooks for exploration and one‑off checks.
 
 ---
@@ -127,7 +137,7 @@ Composites saved to `REPORT_PATH` by `src/image_stack_patch.py`:
 ## Tips & Troubleshooting
 
 - Timezones: intraday timestamps are normalized to New York time in `intraday_read_csv_correct_time`.
-- Missing folders: create `data/`, `stock_image/`, and `stock_report/` as needed; the code creates subfolders per ticker.
+- Missing folders: ensure the directories referenced by `DATA_PATH`, `FIGURE_PATH`, and `REPORT_PATH` exist; the code will create subfolders per ticker on demand.
 - API limits: Alpha Vantage is rate‑limited; consider waiting between runs or using your own cached CSVs.
 - Large numpy/pandas versions: if you hit binary issues, use the provided `environment.yml`.
 

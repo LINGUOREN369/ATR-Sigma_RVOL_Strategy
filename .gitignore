@@ -12,3 +12,7 @@ stock_report/
 stock_images/
 
 *.png
+
+playground/
+
+.DS_Store

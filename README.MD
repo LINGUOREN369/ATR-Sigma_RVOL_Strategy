@@ -19,7 +19,7 @@ Option A — conda (recommended):
 
 1) Create env from `environment.yml`
    - `conda env create -f environment.yml`
-   - `conda activate capm`
+   - `conda activate atr_sigma`
 
 Option B — pip:
 

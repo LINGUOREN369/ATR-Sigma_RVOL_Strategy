@@ -80,13 +80,20 @@ def fetch_data_to_csv(symbol: str, interval: str = "60min", outputsize: str = "f
     """
     Fetch both intraday and daily data and save to CSV files.
     """
+    data_dir = Path(config.DATA_PATH)
+    data_dir.mkdir(parents=True, exist_ok=True)
+
     intraday_df = fetch_alpha(symbol, interval=interval, outputsize=outputsize)
     daily_df = fetch_daily_data(symbol, outputsize=outputsize)
-    intraday_df.to_csv(f"data/{symbol}_{interval}.csv")
-    daily_df.to_csv(f"data/{symbol}_daily.csv")
 
-    print(f"Saved intraday data: {intraday_df.shape} to data/{symbol}_{interval}.csv")
-    print(f"Saved daily data: {daily_df.shape} to data/{symbol}_daily.csv")
+    intraday_path = data_dir / f"{symbol}_{interval}.csv"
+    daily_path = data_dir / f"{symbol}_daily.csv"
+
+    intraday_df.to_csv(intraday_path)
+    daily_df.to_csv(daily_path)
+
+    print(f"Saved intraday data: {intraday_df.shape} to {intraday_path}")
+    print(f"Saved daily data: {daily_df.shape} to {daily_path}")
 
 if __name__ == "__main__":
     stock_ticker_list = config.DOWNLOAD_STOCK_TICKER_LIST

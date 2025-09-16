@@ -2,6 +2,12 @@
 This module contains configuration constants for the ATR-Sigma RVOL Strategy.
 """
 
+from pathlib import Path
+
+## Base paths
+DATA_PATH = Path("/Users/linguoren/Documents/Market_Research/stock_data")
+REPORT_BASE_PATH = Path("/Users/linguoren/Documents/Market_Research/stock_report")
+
 ## Download data
 # Stock ticker list to fetch data into csv file in data folder
 DOWNLOAD_STOCK_TICKER_LIST = [
@@ -28,12 +34,12 @@ STOCK_TICKER = "RUM"
 SHOW_PLOTS = False
 
 ## Path of the folder to save figures
-FIGURE_PATH = f"./stock_image/{STOCK_TICKER}/"
+FIGURE_PATH = Path("./stock_image") / STOCK_TICKER
 FIG_SIZE = (20,6)
 
 
 ## Report Path (compiled images, etc)
-REPORT_PATH = f"./stock_report/{STOCK_TICKER}/"
+REPORT_PATH = REPORT_BASE_PATH / STOCK_TICKER
 
 ## Number of days of daily data to load
 # •	30 days → very short-term view (good for testing, not for trend context).
@@ -60,7 +66,7 @@ ATR_DAILY_ROLLING_WINDOW = 14
 
 
 ## intraday file path
-INTRADAY_FILEPATH = f"./data/{STOCK_TICKER}_{INTRADAY_INTERVAL}.csv"
+INTRADAY_FILEPATH = DATA_PATH / f"{STOCK_TICKER}_{INTRADAY_INTERVAL}.csv"
 
 
 ## Window for intraday (hourly) features.
@@ -80,6 +86,5 @@ SIGMA_ROLLING_WINDOW = 20
 # 	•	10 days → gives more context over two weeks.
 # 	•	20 days → shows a full month, useful for spotting patterns.
 SHOW_N_DAYS = 5
-
 
 

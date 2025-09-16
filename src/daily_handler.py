@@ -1,13 +1,14 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import config
 
 
 def daily_data_handler(stock_ticker: str, daterange: int) -> pd.DataFrame:
     """
     Processes raw daily data by renaming columns, localizing timezone, and setting the date as the index.
     """
-    daily_raw_df = pd.read_csv(f"data/{stock_ticker}_daily.csv")
+    daily_raw_df = pd.read_csv(config.DATA_PATH / f"{stock_ticker}_daily.csv")
     df_daily = daily_raw_df.copy()
     df_daily.columns = ["date", "open", "high", "low", "close", "volume"]
     df_daily["date"] = pd.to_datetime(df_daily["date"]).dt.tz_localize("America/New_York")

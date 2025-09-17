@@ -80,7 +80,7 @@ Notes:
 Generates daily and intraday charts, then stitches composites:
 
 ```bash
-python -m src.test
+python -m src.run
 ```
 
 Output locations:
@@ -88,12 +88,31 @@ Output locations:
 - Individual charts → `FIGURE_PATH` (default `./stock_image/<TICKER>/`)
 - Stitched composites → `REPORT_PATH` (default `/Users/linguoren/Documents/Market_Research/stock_report/<TICKER>/`)
 
+### Default report location and how to change it
+
+- Default: On this machine, stitched reports are saved under `/Users/linguoren/Documents/Market_Research/stock_report/<TICKER>/` (inside the `Documents` folder of user `linguoren`).
+- Change it for a single run (recommended for quick tests):
+
+  ```bash
+  python -m src.test --report-base ~/Documents/my_stock_reports
+  ```
+
+- Change it permanently (edit config): open `config.py` and set a new base folder. `REPORT_PATH` will automatically append the ticker subfolder for you.
+
+  ```python
+  # config.py
+  REPORT_BASE_PATH = Path("/path/you/prefer/stock_report")
+  # REPORT_PATH is derived as: REPORT_BASE_PATH / STOCK_TICKER
+  ```
+
+- Tip: You can also redirect where individual charts are saved with `--figure-base` (or `FIGURE_BASE_PATH` in `config.py`).
+
 Override settings per run without editing `config.py`:
 
 ```bash
-python -m src.test --ticker CRCL
+python -m src.run --ticker CRCL
 # Additional examples
-python -m src.test --ticker VOO --data-path ~/custom_data --report-base ~/reports
+python -m src.run --ticker VOO --data-path ~/custom_data --report-base ~/reports
 ```
 
 ---

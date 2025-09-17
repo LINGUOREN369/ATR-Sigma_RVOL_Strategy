@@ -32,7 +32,7 @@ def intraday_feature_trend_viz(avg_feature_sorted, show = config.SHOW_PLOTS):
         )
     
     plt.title(f"{config.STOCK_TICKER} Intraday {avg_feature_sorted.name} Trend")
-    plt.xticks(rotation=45)
+    plt.xticks(rotation=90)
     plt.xlabel("Time of Day")
     plt.ylabel("Average Feature Value")
     plt.grid(True)
@@ -59,7 +59,9 @@ def intraday_rvol_viz(rvol_df, look_back_period, show_n_days=10, show=config.SHO
     df = df[df["Date"].isin(unique_dates)]
     # Create pivot table for heatmap
     pivot_df = df.pivot(index="Hour", columns="Date", values=f"Intraday_RVOL_{look_back_period}")
-    plt.figure(figsize=config.FIG_SIZE)
+    # Use a slightly shorter figure height so composites remain readable
+    fig_size = getattr(config, "INTRADAY_RVOL_FIG_SIZE", config.FIG_SIZE)
+    plt.figure(figsize=fig_size)
     im = plt.imshow(pivot_df.T, aspect='auto', cmap="viridis_r", origin='lower')
 
     plt.colorbar(im, label=f"Intraday RVOL ({look_back_period}-day look-back)")
@@ -72,7 +74,12 @@ def intraday_rvol_viz(rvol_df, look_back_period, show_n_days=10, show=config.SHO
 
     save_path = Path(config.FIGURE_PATH)
     save_path.mkdir(parents=True, exist_ok=True)
-    plt.savefig(save_path / f"{config.STOCK_TICKER}_intraday_{config.INTRADAY_INTERVAL}_rvol_last_{show_n_days}_days_with_{look_back_period}_day_lookback.png")
+    # Save with tight bounding box to avoid clipping tick labels (years)
+    plt.savefig(
+        save_path / f"{config.STOCK_TICKER}_intraday_{config.INTRADAY_INTERVAL}_rvol_last_{show_n_days}_days_with_{look_back_period}_day_lookback.png",
+        bbox_inches="tight",
+        pad_inches=0.2,
+    )
 
     if show:
         plt.show()

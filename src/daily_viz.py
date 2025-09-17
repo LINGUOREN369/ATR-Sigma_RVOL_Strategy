@@ -40,7 +40,7 @@ def daily_data_feature_viz(df_feature: pd.DataFrame, feature: str, show = config
 
     # Grid, ticks, and layout
     plt.grid(True)
-    plt.xticks(df_feature.index, rotation=45)
+    plt.xticks(df_feature.index, rotation=90)
     plt.tight_layout()
 
     # Ensure figure directory exists
@@ -69,25 +69,23 @@ def daily_data_rvol_viz(volume_df: pd.DataFrame, lookback: int, show = config.SH
     
     daily_date_range = volume_df.shape[0]
 
+    # Match the same figure size and font settings as other daily plots
     plt.figure(figsize=config.FIG_SIZE)
-    plt.plot(volume_df.index, volume_df["rvol"], label="RVOL")
-    for x, y in zip(volume_df.index, volume_df["rvol"]):
-        plt.text(
-            x, y, 
-            f"{y:.2f}",  # format to 2 decimals
-            ha="center", va="bottom", fontsize=8
-        )
-    plt.title(f"{config.STOCK_TICKER} RVOL {daily_date_range} day range - {lookback}-day lookback \n from {volume_df.index.min().date()} to {volume_df.index.max().date()}")
-    plt.xticks(volume_df.index, rotation=45)
+    plt.plot(volume_df.index, volume_df["rvol"], label="RVOL", marker="o")
+    plt.title(
+        f"{config.STOCK_TICKER} RVOL {daily_date_range} day range - {lookback}-day lookback \n"
+        f"from {volume_df.index.min().date()} to {volume_df.index.max().date()}"
+    )
+    plt.xticks(volume_df.index, rotation=90)
     plt.xlabel("Date")
     plt.ylabel("RVOL")
     plt.legend()
     plt.grid(True)
-    
+    plt.tight_layout()
+
     save_path = Path(config.FIGURE_PATH)
     save_path.mkdir(parents=True, exist_ok=True)
     plt.savefig(save_path / f"{config.STOCK_TICKER}_daily_rvol_{daily_date_range}.png")
-    plt.tight_layout()
    
     if show:
         plt.show()
@@ -107,13 +105,13 @@ def daily_data_atr_viz(atr_df: pd.DataFrame, lookback: int, show = config.SHOW_P
     daily_date_range = atr_df.shape[0]
 
     plt.figure(figsize=config.FIG_SIZE)
-    plt.plot(atr_df.index, atr_df, label=f"ATR (n={lookback})")
+    plt.plot(atr_df.index, atr_df, label=f"ATR (n={lookback})", marker="o")
     plt.title(f"{config.STOCK_TICKER} ATR {daily_date_range} day range with {lookback}-day lookback \n from {atr_df.index.min().date()} to {atr_df.index.max().date()}")
     plt.xlabel("Date")
     plt.ylabel("ATR (price units)")
     plt.grid(True)
     plt.legend()
-    plt.xticks(atr_df.index, rotation=45)
+    plt.xticks(atr_df.index, rotation=90)
     plt.tight_layout()
     
     save_path = Path(config.FIGURE_PATH)

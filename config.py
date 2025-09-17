@@ -39,6 +39,13 @@ FIGURE_PATH = FIGURE_BASE_PATH / STOCK_TICKER
 FIG_SIZE = (20,6)
 
 
+## Intraday RVOL figure size (override)
+# Use a shorter height to keep stacked composites readable and prevent
+# axis labels (dates/years) from being clipped or too small after patching.
+# Falls back to FIG_SIZE if not referenced elsewhere.
+INTRADAY_RVOL_FIG_SIZE = (16, 4)
+
+
 ## Report Path (compiled images, etc)
 REPORT_PATH = REPORT_BASE_PATH / STOCK_TICKER
 

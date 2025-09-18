@@ -7,10 +7,12 @@ from pathlib import Path
 import config
 
 from src.daily_handler import (
-    daily_data_handler, 
-    daily_data_feature, 
-    daily_data_rvol, 
-    daily_data_atr)
+    daily_data_handler,
+    daily_data_handler_full,
+    daily_data_feature,
+    daily_data_rvol,
+    daily_data_atr,
+)
 
 from src.daily_viz import (
     daily_data_feature_viz, 
@@ -50,32 +52,46 @@ def run_pipeline() -> None:
     _clean_pngs(figure_path)
     _clean_pngs(report_path)
 
+    # Load full daily data once for context-dependent indicators (e.g., Bollinger)
+    df_daily_full = daily_data_handler_full(stock_ticker)
+    rvol_method = str(getattr(config, "DAILY_RVOL_METHOD", "ema")).lower()
+    use_ema_for_rvol = (rvol_method == "ema")
+
+    # ATR method (title/filename include method)
+    atr_method = str(getattr(config, "ATR_METHOD", "wilder")).lower()
+
     for daily_date_range in daily_range:
-        df_daily = daily_data_handler(stock_ticker, daily_date_range)
+        df_daily = df_daily_full.tail(daily_date_range)
         volume_df = daily_data_feature(df_daily, "volume")
         close_df = daily_data_feature(df_daily, "close")
-        daily_rvol_df = daily_data_rvol(volume_df, daily_rolling_window, ema=True)
-        atr_df = daily_data_atr(df_daily, atr_daily_rolling_window, method="wilder")
+        daily_rvol_df = daily_data_rvol(volume_df, daily_rolling_window, ema=use_ema_for_rvol)
+        atr_df = daily_data_atr(df_daily, atr_daily_rolling_window, method=atr_method)
 
-        daily_data_feature_viz(close_df, "close")
+        # Provide full close context for Bollinger computations
+        close_full_df = daily_data_feature(df_daily_full, "close")
+        daily_data_feature_viz(close_df, "close", context_df=close_full_df)
         daily_data_feature_viz(volume_df, "volume")
-        daily_data_atr_viz(atr_df, atr_daily_rolling_window)
-        daily_data_rvol_viz(daily_rvol_df, daily_rolling_window)
+        daily_data_atr_viz(atr_df, atr_daily_rolling_window, method=atr_method)
+        daily_data_rvol_viz(daily_rvol_df, daily_rolling_window, method=rvol_method)
 
     intraday_rolling_windows = config.INTRADAY_ROLLING_WINDOW
     intraday_filepath = config.INTRADAY_FILEPATH
     n_days = config.SHOW_N_DAYS
+    intraday_avg_method = str(getattr(config, "INTRADAY_AVG_METHOD", "ema")).lower()
+    intraday_rvol_method = str(getattr(config, "INTRADAY_RVOL_METHOD", "ema")).lower()
+    use_ema_avg = (intraday_avg_method == "ema")
+    use_ema_rvol = (intraday_rvol_method == "ema")
 
     for window in intraday_rolling_windows:
         df_rth = intraday_read_csv_correct_time(intraday_filepath)
-        intraday_volume_df = intraday_feature_trend(df_rth, "volume", window, ema=True)
-        intraday_close_df = intraday_feature_trend(df_rth, "close", window, ema=True)
-        intraday_expected_cum_rvol_df = intraday_expected_cum_rvol(df_rth, window, ema=True)
+        intraday_volume_df = intraday_feature_trend(df_rth, "volume", window, ema=use_ema_avg)
+        intraday_close_df = intraday_feature_trend(df_rth, "close", window, ema=use_ema_avg)
+        intraday_expected_cum_rvol_df = intraday_expected_cum_rvol(df_rth, window, ema=use_ema_rvol)
         intraday_rvol_df = intraday_rvol(df_rth, intraday_expected_cum_rvol_df, window)
 
-        intraday_feature_trend_viz(intraday_volume_df)
-        intraday_feature_trend_viz(intraday_close_df)
-        intraday_rvol_viz(intraday_rvol_df, window, show_n_days=n_days)
+        intraday_feature_trend_viz(intraday_volume_df, "volume", window, method=intraday_avg_method)
+        intraday_feature_trend_viz(intraday_close_df, "close", window, method=intraday_avg_method)
+        intraday_rvol_viz(intraday_rvol_df, window, show_n_days=n_days, method=intraday_rvol_method)
 
     import importlib
 

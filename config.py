@@ -27,7 +27,7 @@ OUTPUTSIZE = "full"
 
 
 ## stock ticker to analyze
-STOCK_TICKER = "RUM"
+STOCK_TICKER = "CRCL"
 
 
 ## Show plots when running test.py
@@ -70,11 +70,23 @@ DAILY_ROLLING_WINDOW = 14
 # ATR is often calculated over 14 days, but for a shorter-term view, 5 days can be used.
 # If you want fast signal: keep 5. For swing stability: set 10–14.
 ATR_DAILY_ROLLING_WINDOW = 14
+## ATR average method: "wilder" or "sma" (affects titles/filenames and computation)
+ATR_METHOD = "wilder"
 
 
 
 ## intraday file path
 INTRADAY_FILEPATH = DATA_PATH / f"{STOCK_TICKER}_{INTRADAY_INTERVAL}.csv"
+
+## Bollinger Bands (for daily Close plot)
+# Typical defaults are (20, 2.0). Adjust to taste.
+BOLLINGER_WINDOW = 20
+BOLLINGER_NUM_STD = 2.0
+## Bollinger MA method for daily Close plot: "sma" or "ema"
+BOLLINGER_MA_METHOD = "sma"
+
+## Daily RVOL average method: "ema" or "sma"
+DAILY_RVOL_METHOD = "ema"
 
 
 ## Window for intraday (hourly) features.
@@ -94,6 +106,12 @@ SIGMA_ROLLING_WINDOW = 20
 # 	•	10 days → gives more context over two weeks.
 # 	•	20 days → shows a full month, useful for spotting patterns.
 SHOW_N_DAYS = 5
+
+## Intraday averaging methods
+# Controls time-of-day averages for close/volume trends
+INTRADAY_AVG_METHOD = "ema"  # "ema" or "sma"
+# Controls expected cumulative volume curve used in intraday RVOL
+INTRADAY_RVOL_METHOD = "ema"  # "ema" or "sma"
 
 
 def _refresh_runtime_paths() -> None:

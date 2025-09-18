@@ -18,6 +18,17 @@ def daily_data_handler(stock_ticker: str, daterange: int) -> pd.DataFrame:
     return df_daily.tail(daterange).copy()
 
 
+def daily_data_handler_full(stock_ticker: str) -> pd.DataFrame:
+    """Load and normalize the full daily dataset for a ticker (no tail cut)."""
+    daily_raw_df = pd.read_csv(config.DATA_PATH / f"{stock_ticker}_daily.csv")
+    df_daily = daily_raw_df.copy()
+    df_daily.columns = ["date", "open", "high", "low", "close", "volume"]
+    df_daily["date"] = pd.to_datetime(df_daily["date"]).dt.tz_localize("America/New_York")
+    df_daily = df_daily.set_index("date")
+    df_daily = df_daily.sort_index(ascending=True)
+    return df_daily.copy()
+
+
 
 def daily_data_feature(df_daily: pd.DataFrame, feature: str) -> pd.DataFrame:
     """

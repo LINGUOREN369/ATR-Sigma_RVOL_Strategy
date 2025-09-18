@@ -7,9 +7,9 @@ A modular Python toolkit to compute and visualize daily ATR and (daily/intraday)
 ## Overview
 
 - Bold, opinionated defaults in `config.py` to keep runs reproducible.
-- Daily metrics: Close, Volume, RVOL, ATR (Wilder/SMA).
+- Daily metrics: Close (with Bollinger Bands, SMA/EMA), Volume, RVOL, ATR (Wilder/SMA).
 - Intraday metrics: Time‑of‑day averages (close/volume), intraday cumulative RVOL vs expected.
-- Image compositor stitches period variants (e.g., 30‑60‑120 days) and intervals.
+- Image compositor stitches: daily by time range (Close → Volume → RVOL → ATR), and intraday period/interval variants.
 
 ---
 
@@ -47,10 +47,16 @@ Edit `config.py` to control all behavior:
 - `DAILY_DATE_RANGE`: list of daily windows to render (e.g., `[30, 60, 120]`).
 - `DAILY_ROLLING_WINDOW`: RVOL lookback (days).
 - `ATR_DAILY_ROLLING_WINDOW`: ATR lookback (days; Wilder or SMA in code).
+- `ATR_METHOD`: `"wilder"` or `"sma"`. Method is included in ATR chart titles and filenames.
+- `BOLLINGER_WINDOW`, `BOLLINGER_NUM_STD`: Bollinger Bands settings for daily Close. Bands are computed on full history and then aligned to each window (30/60/120) so they are present from the first day of the window.
+- `BOLLINGER_MA_METHOD`: `"sma"` or `"ema"` for the Bollinger moving average. The method is also reflected in the Close chart filename and title.
+- `DAILY_RVOL_METHOD`: `"ema"` or `"sma"` for the daily RVOL average (denominator). The method is reflected in the RVOL chart filename and title.
 - `INTRADAY_FILEPATH`: path to intraday CSV for the analysis ticker.
 - `INTRADAY_ROLLING_WINDOW`: list of lookbacks for intraday features (days).
 - `SHOW_N_DAYS`: number of recent days for the intraday RVOL heatmap.
 - `SHOW_PLOTS`: show matplotlib windows (headless default is `False`).
+- `INTRADAY_AVG_METHOD`: `"ema"` or `"sma"` for intraday time-of-day averages (close/volume). Reflected in the title and filename.
+- `INTRADAY_RVOL_METHOD`: `"ema"` or `"sma"` for the expected cumulative volume used in intraday RVOL. Reflected in the title and filename.
 
 ---
 
@@ -94,7 +100,7 @@ Output locations:
 - Change it for a single run (recommended for quick tests):
 
   ```bash
-  python -m src.test --report-base ~/Documents/my_stock_reports
+  python -m src.run --report-base ~/Documents/my_stock_reports
   ```
 
 - Change it permanently (edit config): open `config.py` and set a new base folder. `REPORT_PATH` will automatically append the ticker subfolder for you.
@@ -121,21 +127,28 @@ python -m src.run --ticker VOO --data-path ~/custom_data --report-base ~/reports
 
 Daily charts (examples for `VOO`):
 
-- `VOO_daily_close_30.png`, `VOO_daily_close_60.png`, `VOO_daily_close_120.png`
+- `VOO_daily_close_sma_30.png`, `VOO_daily_close_sma_60.png`, `VOO_daily_close_sma_120.png` (suffix reflects Bollinger MA method)
 - `VOO_daily_volume_30.png`, `VOO_daily_volume_60.png`, `VOO_daily_volume_120.png`
-- `VOO_daily_rvol_30.png`, `VOO_daily_rvol_60.png`, `VOO_daily_rvol_120.png`
-- `VOO_daily_atr_30.png`, `VOO_daily_atr_60.png`, `VOO_daily_atr_120.png`
+- `VOO_daily_rvol_ema_30.png`, `VOO_daily_rvol_ema_60.png`, `VOO_daily_rvol_ema_120.png` (suffix reflects RVOL average method)
+- `VOO_daily_atr_wilder_30.png`, `VOO_daily_atr_wilder_60.png`, `VOO_daily_atr_wilder_120.png` (suffix reflects ATR method; title shows WILD or SMA)
 
 Intraday charts (interval aware):
 
-- Averages (close/volume): `VOO_intraday_60min_average_close_10_days_look_back.png`
-- RVOL heatmap: `VOO_intraday_60min_rvol_last_5_days_with_20_day_lookback.png`
+- Averages (close/volume): `VOO_intraday_60min_average_close_10_days_look_back_ema.png` (suffix reflects average method)
+- RVOL heatmap: `VOO_intraday_60min_rvol_last_5_days_with_20_day_lookback_ema.png` (suffix reflects expected-curve method)
 
 Composites saved to `REPORT_PATH` by `src/image_stack_patch.py`:
 
-- Daily family: `VOO_daily_close_30-60-120.png`
+- Daily (by period, ordered Close → Volume → RVOL → ATR):
+  `VOO_daily_30_close-volume-rvol-atr.png`, `VOO_daily_60_close-volume-rvol-atr.png`, `VOO_daily_120_close-volume-rvol-atr.png`
 - Intraday averages family: `VOO_intraday_60min_average_close_5-10-20.png`
 - Intraday RVOL family: `VOO_intraday_60min_rvol_last_5_days_with_lookback_5-10-20.png`
+
+Manual patching only (optional):
+
+```bash
+python -c "from src.image_stack_patch import patch_images; patch_images()"
+```
 
 ---
 

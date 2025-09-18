@@ -3,6 +3,15 @@
 Discovers PNGs under `FIG_DIR` that match known filename patterns and
 stitches related images vertically into composite panels saved under
 `REPORT_DIR`.
+
+Daily behavior:
+- Previously stacked by variable across time ranges (e.g., close 30-60-120).
+- Now stacks by time range, combining variables in this top-to-bottom order:
+  Close, Volume, RVOL, ATR.
+  Output filename is formatted as:
+    `<TICKER>_daily_<period>_close-volume-rvol-atr.png`.
+
+Intraday behavior remains unchanged.
 """
 
 from pathlib import Path
@@ -33,27 +42,27 @@ DAILY_PATTERN = re.compile(
 # - Alternate (interval after ticker):
 #     VOO_30min_intraday_average_close_5_days_look_back.png
 INTRA_AVG_PATTERN_AFTER_INTRADAY = re.compile(
-    rf"^{re.escape(TICKER)}_intraday_(?P<interval>[a-z0-9]+)_average_(?P<atype>close|volume)_(?P<period>\d+)_days_look_back\.png$",
+    rf"^{re.escape(TICKER)}_intraday_(?P<interval>[a-z0-9]+)_average_(?P<atype>close|volume)_(?P<period>\d+)_days_look_back(?:_(?P<method>ema|sma))?\.png$",
     re.IGNORECASE,
 )
 INTRA_AVG_PATTERN_AFTER_TICKER = re.compile(
-    rf"^{re.escape(TICKER)}_(?P<interval>[a-z0-9]+)_intraday_average_(?P<atype>close|volume)_(?P<period>\d+)_days_look_back\.png$",
+    rf"^{re.escape(TICKER)}_(?P<interval>[a-z0-9]+)_intraday_average_(?P<atype>close|volume)_(?P<period>\d+)_days_look_back(?:_(?P<method>ema|sma))?\.png$",
     re.IGNORECASE,
 )
 INTRA_AVG_PATTERN_LEGACY = re.compile(
-    rf"^{re.escape(TICKER)}_intraday_average_(?P<atype>close|volume)_(?P<period>\d+)_days_look_back\.png$",
+    rf"^{re.escape(TICKER)}_intraday_average_(?P<atype>close|volume)_(?P<period>\d+)_days_look_back(?:_(?P<method>ema|sma))?\.png$",
     re.IGNORECASE,
 )
 
 # Intraday RVOL:
 # - Interval-aware, e.g.: VOO_intraday_5min_rvol_last_10_days_with_20_day_lookback.png
 INTRA_RVOL_PATTERN_WITH_INTERVAL = re.compile(
-    rf"^{re.escape(TICKER)}_intraday_(?P<interval>[a-z0-9]+)_rvol_last_(?P<show>\d+)_days_with_(?P<period>\d+)_day_lookback\.png$",
+    rf"^{re.escape(TICKER)}_intraday_(?P<interval>[a-z0-9]+)_rvol_last_(?P<show>\d+)_days_with_(?P<period>\d+)_day_lookback(?:_(?P<method>ema|sma))?\.png$",
     re.IGNORECASE,
 )
 # - Legacy without interval, e.g.: VOO_intraday_rvol_last_10_days_with_20_day_lookback.png
 INTRA_RVOL_PATTERN = re.compile(
-    rf"^{re.escape(TICKER)}_intraday_rvol_last_(?P<show>\d+)_days_with_(?P<period>\d+)_day_lookback\.png$",
+    rf"^{re.escape(TICKER)}_intraday_rvol_last_(?P<show>\d+)_days_with_(?P<period>\d+)_day_lookback(?:_(?P<method>ema|sma))?\.png$",
     re.IGNORECASE,
 )
 
@@ -120,6 +129,34 @@ def discover_daily_images() -> Dict[str, Dict[int, Path]]:
         period = int(m.group("period"))
         _add(groups, base, period, p)
     return groups
+
+
+def discover_daily_images_by_period() -> Dict[int, Dict[str, Path]]:
+    """Return { period:int -> { feature:str -> Path } } for daily images.
+
+    Features expected: close, volume, rvol, atr
+    """
+    by_period: Dict[int, Dict[str, Path]] = {}
+    daily = discover_daily_images()
+    for base, per_map in daily.items():
+        # base like: 'daily_close', 'daily_close_ema', 'daily_volume', 'daily_rvol', 'daily_rvol_ema', 'daily_atr', 'daily_atr_wilder'
+        feat_full = base.replace("daily_", "").lower()
+        # Normalize to canonical feature key for stacking
+        if feat_full.startswith("close"):
+            feat_key = "close"
+        elif feat_full.startswith("volume"):
+            feat_key = "volume"
+        elif feat_full.startswith("rvol"):
+            feat_key = "rvol"
+        elif feat_full.startswith("atr"):
+            feat_key = "atr"
+        else:
+            feat_key = feat_full  # fallback
+
+        for period, p in per_map.items():
+            # If multiple variants exist (e.g., close and close_ema), the latter seen wins.
+            _add(by_period, period, feat_key, p)
+    return by_period
 
 
 def discover_intraday_images() -> Dict[str, Dict[Hashable, Path]]:
@@ -234,23 +271,36 @@ def patch_images() -> None:
     _ensure_dir(FIG_DIR)
     _ensure_dir(REPORT_DIR)
 
-    groups: Dict[str, Dict[Hashable, Path]] = {}
+    saved_any = False
 
-    # Merge daily and intraday-by-period groups
-    for base, mapping in discover_daily_images().items():
-        groups[base] = mapping
+    # -------- DAILY: stack by time (period), order: Close, Volume, RVOL, ATR --------
+    daily_by_period = discover_daily_images_by_period()
+    DAILY_FEATURE_ORDER = ["close", "volume", "rvol", "atr"]
+
+    for period in sorted(daily_by_period.keys()):
+        fmap = daily_by_period[period]
+        ordered_paths = [fmap[f] for f in DAILY_FEATURE_ORDER if f in fmap]
+        if len(ordered_paths) < 2:
+            continue  # need at least 2 to stack meaningfully
+        stitched = stitch_vertical(ordered_paths)
+        order_suffix = "-".join(DAILY_FEATURE_ORDER)
+        out_name = f"{TICKER}_daily_{period}_{order_suffix}.png"
+        out_path = REPORT_DIR / out_name
+        stitched.save(out_path)
+        saved_any = True
+        print(f"✔ Saved {out_path}")
+
+    # -------- INTRADAY: existing behavior (stack by period or across intervals) --------
+    # Period-based stacks for intraday families
+    intra_groups: Dict[str, Dict[Hashable, Path]] = {}
     for base, mapping in discover_intraday_images().items():
-        groups[base] = mapping
+        intra_groups[base] = mapping
 
-    # And add cross-interval groups (keys are interval strings)
+    # Across-interval stacks for matching logical bases
     for base, mapping in discover_intraday_images_by_interval().items():
-        groups[base] = mapping
+        intra_groups[base] = mapping
 
-    if not groups:
-        print("No matching daily or intraday images found.")
-        return
-
-    for base, variant_map in groups.items():
+    for base, variant_map in intra_groups.items():
         keys = list(variant_map.keys())
         if all(isinstance(k, int) for k in keys):
             ordered = sorted(keys)  # periods
@@ -258,7 +308,7 @@ def patch_images() -> None:
             ordered = sorted(keys, key=_interval_sort_key)  # intervals
 
         if len(ordered) < 2:
-            continue  # nothing to stitch
+            continue
 
         paths = [variant_map[k] for k in ordered]
         stitched = stitch_vertical(paths)
@@ -266,5 +316,8 @@ def patch_images() -> None:
         out_name = f"{TICKER}_{base}_{suffix}.png"
         out_path = REPORT_DIR / out_name
         stitched.save(out_path)
+        saved_any = True
         print(f"✔ Saved {out_path}")
 
+    if not saved_any:
+        print("No matching daily or intraday images found.")
